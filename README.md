@@ -18,7 +18,6 @@ NoDB is an innovative approach to database management, leveraging the robust sto
 >   - [Querying](#querying)
 >     - [Find One](#find-one)
 >     - [Find Many](#find-many)
->     - [Find By ID](#find-by-id)
 >     - [Find All](#find-all)
 
 ## Installation
@@ -138,9 +137,8 @@ if err := user.Commit(); err != nil {
 ### Updating
 
 ```go
-user := users.FindByID("85886d97-ec40-4a56-8569-ff2ea118a2a1")
-
-user := users.Update(user, Users{
+user := users.Update(Users{
+    UUID:  "85886d97-ec40-4a56-8569-ff2ea118a2a1",
     Name:  "Jane Doe",
     Email: "jane.doe@bar.com",
 })
@@ -155,13 +153,13 @@ if err := user.Commit(); err != nil {
 ### Deleting
 
 ```go
-user := users.FindByID("85886d97-ec40-4a56-8569-ff2ea118a2a1")
+user := users.Delete(Users{
+    UUID: "85886d97-ec40-4a56-8569-ff2ea118a2a1",
+})
 
-if err := user.Delete(); err != nil {
+if err := user.Commit(); err != nil {
     log.Fatal(err)
 }
-
-// ...
 ```
 
 ### Querying
@@ -189,6 +187,7 @@ user := query.Result().(Users)
 query := users.FindMany(nodb.Query{
     Field: "name",
     Value: "Doe",
+    Flags: nodb.QueryFlagContains,
 })
 
 if err := query.Execute(); err != nil {
@@ -196,18 +195,6 @@ if err := query.Execute(); err != nil {
 }
 
 users := query.Result().([]Users)
-
-// ...
-```
-
-#### <u>Find By ID</u>
-
-```go
-user := users.FindByID("85886d97-ec40-4a56-8569-ff2ea118a2a1")
-
-if err := user.Fetch(); err != nil {
-    log.Fatal(err)
-}
 
 // ...
 ```
