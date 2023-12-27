@@ -56,7 +56,7 @@ func main() {
 Schemas are used to manage the structure of collections. Schemas are defined using structs, with `json` tags to define the name of the field in the database object.
 
 ```go
-type Users struct {
+type User struct {
     Name  string `json:"name"`
     Email string `json:"email"`
 }
@@ -73,7 +73,7 @@ NoDB can automatically generate values for certain types of fields. To enable th
 - `unix` - Generates a Unix timestamp in milliseconds
 
 ```go
-type Users struct {
+type User struct {
     Name     string `json:"name"`
     Email    string `json:"email"`
     Created  int64  `json:"created" nodb:"unix"`
@@ -86,7 +86,7 @@ type Users struct {
 NoDB will validate the schema of each object before storing it in the database. If the object doesn't match the schema, an error will be returned. NoDB uses [go-playground/validator](https://github.com/go-playground/validator) for schema validation, and supports all of the tags defined by that package.
 
 ```go
-type Users struct {
+type User struct {
     Name     string `json:"name" validate:"required"`
     Email    string `json:"email" validate:"required,email"`
     Created  int64  `json:"created" nodb:"unix"`
@@ -101,7 +101,7 @@ Collections are groups of objects that share the same schema. If the collection 
 ```go
 users := client.Collection(nodb.Collection{
     Name:   "users",
-    Schema: Users{},
+    Schema: User{},
 })
 
 if err := users.Commit(); err != nil {
@@ -113,7 +113,7 @@ if err := users.Commit(); err != nil {
 
 ## Working with Objects
 
-Objects are stored in collections, and represent a single record in the database. Objects can be found in S3 using the following path:
+Objects are stored in collections, and represent a single record in the database. Objects can be found in S3 under the following path:
 
 ```
 <bucket>/<collection>/<uuid>.json
@@ -122,12 +122,12 @@ Objects are stored in collections, and represent a single record in the database
 ### Creating
 
 ```go
-user := users.Create(Users{
+user := users.Create(User{
     Name:  "John Doe",
     Email: "john.doe@foo.com",
 })
 
-if err := user.Commit(); err != nil {
+if err := user.Save(); err != nil {
     log.Fatal(err)
 }
 
@@ -137,27 +137,17 @@ if err := user.Commit(); err != nil {
 ### Updating
 
 ```go
-user := users.Update(Users{
-    UUID:  "85886d97-ec40-4a56-8569-ff2ea118a2a1",
-    Name:  "Jane Doe",
-    Email: "jane.doe@bar.com",
-})
+user.Email = "jane.doe@bar.com"
 
-if err := user.Commit(); err != nil {
+if err := user.Save(); err != nil {
     log.Fatal(err)
 }
-
-// ...
 ```
 
 ### Deleting
 
 ```go
-user := users.Delete(Users{
-    UUID: "85886d97-ec40-4a56-8569-ff2ea118a2a1",
-})
-
-if err := user.Commit(); err != nil {
+if err := user.Delete(); err != nil {
     log.Fatal(err)
 }
 ```
@@ -176,7 +166,7 @@ if err := query.Execute(); err != nil {
     log.Fatal(err)
 }
 
-user := query.Result().(Users)
+user := query.Result().(User)
 
 // ...
 ```
@@ -194,7 +184,7 @@ if err := query.Execute(); err != nil {
     log.Fatal(err)
 }
 
-users := query.Result().([]Users)
+users := query.Result().([]User)
 
 // ...
 ```
@@ -208,7 +198,7 @@ if err := query.Execute(); err != nil {
     log.Fatal(err)
 }
 
-users := query.Result().([]Users)
+users := query.Result().([]User)
 
 // ...
 ```
