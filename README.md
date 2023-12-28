@@ -4,6 +4,7 @@ NoDB is an innovative approach to database management, leveraging the robust sto
 
 > **Table of Contents**
 >
+> - [Features](#features)
 > - [Installation](#installation)
 > - [Creating a Client](#creating-a-client)
 > - [Creating a Schema](#creating-a-schema)
@@ -20,10 +21,65 @@ NoDB is an innovative approach to database management, leveraging the robust sto
 >     - [Find Many](#find-many)
 >     - [Find All](#find-all)
 
+## Features
+
+- No database required
+- S3-backed [durability](https://docs.aws.amazon.com/AmazonS3/latest/userguide/DataDurability.html) and [consistency](https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html#ConsistencyModel)
+- Pessimistic and optimistic object locking
+- Indexing and querying support
+- Cross-client schema synchronization
+- Robust schema validation
+
 ## Installation
 
 ```bash
 go get github.com/nallenscott/nodb-go
+```
+
+## Quick start
+
+```go
+package main
+
+import (
+    "log"
+
+    "github.com/nallenscott/nodb-go"
+)
+
+type User struct {
+    Name     string `json:"name" validate:"required"`
+    Email    string `json:"email" validate:"required,email"`
+    Created  int64  `json:"created" nodb:"unix"`
+    Updated  int64  `json:"updated" nodb:"unix"`
+}
+
+var client = nodb.Connect(nodb.Client{
+    Bucket: "my-bucket",
+    Region: "us-east-1",
+})
+
+func main() {
+    users := client.Collection(nodb.Collection{
+        Name:   "users",
+        Schema: User{},
+    })
+
+    if err := users.Commit(); err != nil {
+        log.Fatal(err)
+    }
+
+    user := users.Create(User{
+        Name:  "John Doe",
+        Email: "john.doe@foo.com",
+    })
+
+    if err := user.Save(); err != nil {
+        log.Fatal(err)
+    }
+
+    log.Printf("User %s created at %d", user.Name, user.Created)
+}
 ```
 
 ## Creating a Client
@@ -37,16 +93,12 @@ import (
     "github.com/nallenscott/nodb-go"
 )
 
-var client = nodb.NewClient(nodb.Client{
+var client = nodb.Connect(nodb.Client{
     Bucket: "my-bucket",
     Region: "us-east-1",
 })
 
 func main() {
-    if err := client.Connect(); err != nil {
-        log.Fatal(err)
-    }
-
     // ...
 }
 ```
