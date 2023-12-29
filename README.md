@@ -23,12 +23,11 @@ NoDB is an innovative approach to database management, leveraging the robust sto
 
 ## Features
 
-- No database required
+- No server or database required
 - S3-backed [durability](https://docs.aws.amazon.com/AmazonS3/latest/userguide/DataDurability.html) and [consistency](https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html#ConsistencyModel)
 - Pessimistic and optimistic object locking
 - Indexing and querying support
-- Cross-client schema synchronization
-- Robust schema validation
+- Schema [validation](https://github.com/go-playground/validator)
 
 ## Installation
 
@@ -42,43 +41,43 @@ go get github.com/nallenscott/nodb-go
 package main
 
 import (
-    "log"
+  "log"
 
-    "github.com/nallenscott/nodb-go"
+  "github.com/nallenscott/nodb-go"
 )
 
 type User struct {
-    Name     string `json:"name" validate:"required"`
-    Email    string `json:"email" validate:"required,email"`
-    Created  int64  `json:"created" nodb:"unix"`
-    Updated  int64  `json:"updated" nodb:"unix"`
+  Name     string `json:"name" validate:"required"`
+  Email    string `json:"email" validate:"required,email"`
+  Created  int64  `json:"created" nodb:"unix"`
+  Updated  int64  `json:"updated" nodb:"unix"`
 }
 
-var client = nodb.Connect(nodb.Client{
-    Bucket: "my-bucket",
-    Region: "us-east-1",
-})
+var client = nodb.Client{
+  Bucket: "my-bucket",
+  Region: "us-east-1",
+}
 
 func main() {
-    users := client.Collection(nodb.Collection{
-        Name:   "users",
-        Schema: User{},
-    })
+  if err := client.Connect(); err != nil {
+    log.Fatal(err)
+  }
 
-    if err := users.Commit(); err != nil {
-        log.Fatal(err)
-    }
+  users := client.Collection(nodb.Schema{
+    Name:  "users",
+    Model: User{},
+  })
 
-    user := users.Create(User{
-        Name:  "John Doe",
-        Email: "john.doe@foo.com",
-    })
+  user := users.Create(users.Model{
+    Name:  "John Doe",
+    Email: "john.doe@foo.com",
+  })
 
-    if err := user.Save(); err != nil {
-        log.Fatal(err)
-    }
+  if err := user.Save(); err != nil {
+    log.Fatal(err)
+  }
 
-    log.Printf("User %s created at %d", user.Name, user.Created)
+  log.Printf("Created user %s at %d", user.UUID(), user.Created())
 }
 ```
 
@@ -88,18 +87,22 @@ The client is used to manage the location and structure of the database. NoDB re
 
 ```go
 import (
-    "log"
+  "log"
 
-    "github.com/nallenscott/nodb-go"
+  "github.com/nallenscott/nodb-go"
 )
 
-var client = nodb.Connect(nodb.Client{
-    Bucket: "my-bucket",
-    Region: "us-east-1",
-})
+var client = nodb.Client{
+  Bucket: "my-bucket",
+  Region: "us-east-1",
+}
 
 func main() {
-    // ...
+  if err := client.Connect(); err != nil {
+    log.Fatal(err)
+  }
+
+  // ...
 }
 ```
 
@@ -109,9 +112,16 @@ Schemas are used to manage the structure of collections. Schemas are defined usi
 
 ```go
 type User struct {
-    Name  string `json:"name"`
-    Email string `json:"email"`
+  Name  string `json:"name"`
+  Email string `json:"email"`
 }
+
+schema := nodb.Schema{
+  Name:  "users",
+  Model: User{},
+}
+
+//...
 ```
 
 ### Object Identifiers
@@ -126,10 +136,10 @@ NoDB can automatically generate values for certain types of fields. To enable th
 
 ```go
 type User struct {
-    Name     string `json:"name"`
-    Email    string `json:"email"`
-    Created  int64  `json:"created" nodb:"unix"`
-    Updated  int64  `json:"updated" nodb:"unix"`
+  Name     string `json:"name"`
+  Email    string `json:"email"`
+  Created  int64  `json:"created" nodb:"unix"`
+  Updated  int64  `json:"updated" nodb:"unix"`
 }
 ```
 
@@ -139,10 +149,10 @@ NoDB will validate the schema of each object before storing it in the database. 
 
 ```go
 type User struct {
-    Name     string `json:"name" validate:"required"`
-    Email    string `json:"email" validate:"required,email"`
-    Created  int64  `json:"created" nodb:"unix"`
-    Updated  int64  `json:"updated" nodb:"unix"`
+  Name     string `json:"name" validate:"required"`
+  Email    string `json:"email" validate:"required,email"`
+  Created  int64  `json:"created" nodb:"unix"`
+  Updated  int64  `json:"updated" nodb:"unix"`
 }
 ```
 
@@ -151,14 +161,10 @@ type User struct {
 Collections are groups of objects that share the same schema. If the collection doesn't exist, it will be created. If the schema doesn't match the existing collection, an error will be returned.
 
 ```go
-users := client.Collection(nodb.Collection{
-    Name:   "users",
-    Schema: User{},
+users := client.Collection(nodb.Schema{
+  Name:  "users",
+  Model: User{},
 })
-
-if err := users.Commit(); err != nil {
-    log.Fatal(err)
-}
 
 // ...
 ```
@@ -174,13 +180,13 @@ Objects are stored in collections, and represent a single record in the database
 ### Creating
 
 ```go
-user := users.Create(User{
-    Name:  "John Doe",
-    Email: "john.doe@foo.com",
+user := users.Create(users.Model{
+  Name:  "John Doe",
+  Email: "john.doe@foo.com",
 })
 
 if err := user.Save(); err != nil {
-    log.Fatal(err)
+  log.Fatal(err)
 }
 
 // ...
