@@ -24,10 +24,11 @@ NoDB is an innovative approach to database management, leveraging the robust sto
 ## Features
 
 - No server or database required
-- S3-backed [durability](https://docs.aws.amazon.com/AmazonS3/latest/userguide/DataDurability.html) and [consistency](https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html#ConsistencyModel)
-- Pessimistic and optimistic object locking
-- Indexing and querying support
-- Schema [validation](https://github.com/go-playground/validator)
+- S3-backed [durability]() and [consistency]()
+- [Pessimistic]() and [optimistic]() concurrency control
+- Real-time [change data capture]()
+- Schema [validation]()
+
 
 ## Installation
 
