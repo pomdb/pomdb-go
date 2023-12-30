@@ -1,4 +1,7 @@
-# pomdb-go
+<h1 align="center">
+  <img src="pomdb.png" width=420 alt=""><br>
+  pomdb-go<br>
+</h1>
 
 PomDB is an innovative approach to database management, leveraging the robust storage capabilities of [S3]() to store and retrieve data without the need for a traditional database.
 
