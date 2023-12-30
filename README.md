@@ -1,12 +1,18 @@
-<h1 align="center">
-  <img src="pomdb.png" width=420 alt=""><br>
-  pomdb-go<br><hr>
-  <a href="https://goreportcard.com/report/github.com/pomdb/pomdb-go"><img src="https://goreportcard.com/badge/github.com/pomdb/pomdb-go?style=flat-square"></a>
-  <a href="https://pkg.go.dev/github.com/pomdb/pomdb-go"><img src="https://pkg.go.dev/badge/github.com/pomdb/pomdb-go"></a>
-  <a href="https://github.com/pomdb/pomdb-go/releases/latest"><img src="https://img.shields.io/github/release/pomdb/pomdb-go.svg?style=flat-square"></a>
-</h1>
-
-PomDB is an innovative approach to database management, leveraging the robust storage capabilities of [S3](https://aws.amazon.com/s3/) to store and retrieve data. PomDB takes a client-driven approach to data management, and enforces an opinionated schema-based bucket structure for consistency and compatibility.
+<div>
+  <h1 align="center">
+    <img src="pomdb.png" width=420 alt=""><br>
+    pomdb-go<br>
+  </h1>
+  <br>
+  <p align="center">
+    <a href="https://goreportcard.com/report/github.com/pomdb/pomdb-go"><img src="https://goreportcard.com/badge/github.com/pomdb/pomdb-go?style=flat-square"></a>
+    <a href="https://pkg.go.dev/github.com/pomdb/pomdb-go"><img src="https://pkg.go.dev/badge/github.com/pomdb/pomdb-go"></a>
+    <a href="https://github.com/pomdb/pomdb-go/releases/latest"><img src="https://img.shields.io/github/release/pomdb/pomdb-go.svg?style=flat-square"></a>
+  </p>
+  <p>
+    PomDB is an innovative approach to database management, leveraging the robust storage capabilities of [S3](https://aws.amazon.com/s3/) to store and retrieve data. PomDB takes a client-driven approach to data management, and enforces an opinionated schema-based bucket structure for consistency and compatibility.
+  </p>
+</div>
 
 > **Table of Contents**
 >
