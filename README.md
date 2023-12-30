@@ -10,7 +10,7 @@
     <a href="https://github.com/pomdb/pomdb-go/releases/latest"><img src="https://img.shields.io/github/release/pomdb/pomdb-go.svg?style=flat-square"></a>
   </p>
   <p>
-    <strong>PomDB</strong> is an innovative approach to database management, leveraging the robust storage capabilities of <a href="https://aws.amazon.com/s3">S3</a> to store and retrieve data. PomDB is entirely client-driven and enforces an opinionated structure for consistency and compatibility. It's designed to take the <strong>pain</strong> out of deploying and scaling a database, with <strong>zero</strong> configuration required.
+    <strong>PomDB</strong> is an innovative approach to database management, leveraging the robust storage capabilities of <a href="https://aws.amazon.com/s3">S3</a> to store and retrieve data. PomDB is entirely client-driven and enforces an opinionated structure for consistency and compatibility. Designed to take the <strong>pain</strong> out scaling a database, with <strong>zero</strong> configuration required.
   </p>
 </div>
 
