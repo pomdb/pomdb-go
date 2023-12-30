@@ -3,7 +3,7 @@
   pomdb-go<br>
 </h1>
 
-PomDB is an innovative approach to database management, leveraging the robust storage capabilities of [S3]() to store and retrieve data without the need for a traditional database.
+PomDB is an innovative approach to database management, leveraging the robust storage capabilities of [S3](https://aws.amazon.com/s3/) to store and retrieve data without the need for a traditional database server. PomDB takes a client-driven approach to data management, with an opinionated schema-based bucket structure for consistency and compatibility.
 
 > **Table of Contents**
 >
@@ -29,9 +29,8 @@ PomDB is an innovative approach to database management, leveraging the robust st
 - No server or database required
 - S3-backed [durability]() and [consistency]()
 - [Pessimistic]() and [optimistic]() concurrency control
-- Real-time [change data capture]()
-- Schema [validation]()
-
+- Real-time [change data capture]() via S3 events
+- Schema [generation]() and [validation]()
 
 ## Installation
 
