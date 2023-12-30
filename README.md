@@ -10,28 +10,9 @@
     <a href="https://github.com/pomdb/pomdb-go/releases/latest"><img src="https://img.shields.io/github/release/pomdb/pomdb-go.svg?style=flat-square"></a>
   </p>
   <p>
-    PomDB is an innovative approach to database management, leveraging the robust storage capabilities of [S3](https://aws.amazon.com/s3/) to store and retrieve data. PomDB takes a client-driven approach to data management, and enforces an opinionated schema-based bucket structure for consistency and compatibility.
+    <strong>PomDB</strong> is an innovative approach to database management, leveraging the robust storage capabilities of <a href="https://aws.amazon.com/s3">S3</a> to store and retrieve data. PomDB takes a client-driven approach to data management, and enforces an opinionated schema-based bucket structure for consistency and compatibility.
   </p>
 </div>
-
-> **Table of Contents**
->
-> - [Features](#features)
-> - [Installation](#installation)
-> - [Creating a Client](#creating-a-client)
-> - [Creating a Schema](#creating-a-schema)
->   - [Object Identifiers](#object-identifiers)
->   - [Generated Fields](#generated-fields)
->   - [Field Validation](#field-validation)
-> - [Creating a Collection](#creating-a-collection)
-> - [Working with Objects](#working-with-objects)
->   - [Creating](#creating)
->   - [Updating](#updating)
->   - [Deleting](#deleting)
->   - [Querying](#querying)
->     - [Find One](#find-one)
->     - [Find Many](#find-many)
->     - [Find All](#find-all)
 
 ## Features
 
