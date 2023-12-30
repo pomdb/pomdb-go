@@ -15,6 +15,16 @@ type Client struct {
 	service     *s3.Client
 }
 
+type Schema struct {
+	Name  string
+	Model interface{}
+}
+
+type Collection struct {
+	Client *Client
+	Schema *Schema
+}
+
 func (c *Client) Connect() error {
 	cfg, err := config.LoadDefaultConfig(
 		context.TODO(),
@@ -38,4 +48,8 @@ func (c *Client) Collection(schema *Schema) *Collection {
 	}
 
 	return c.Collections[schema.Name]
+}
+
+func (s *Collection) Create(model interface{}) error {
+	return nil
 }
