@@ -16,7 +16,7 @@
 
 ## Features
 
-- No server or database required
+- No server or configuration required
 - S3-backed [durability]() and [consistency]()
 - [Pessimistic]() and [optimistic]() concurrency control
 - Real-time [change data capture]() via S3 events
