@@ -1,6 +1,6 @@
-# nodb-go
+# pomdb-go
 
-NoDB is an innovative approach to database management, leveraging the robust storage capabilities of [S3]() to store and retrieve data without the need for a traditional database.
+PomDB is an innovative approach to database management, leveraging the robust storage capabilities of [S3]() to store and retrieve data without the need for a traditional database.
 
 > **Table of Contents**
 >
@@ -33,7 +33,7 @@ NoDB is an innovative approach to database management, leveraging the robust sto
 ## Installation
 
 ```bash
-go get github.com/nallenscott/nodb-go
+go get github.com/nallenscott/pomdb-go
 ```
 
 ## Quick start
@@ -44,17 +44,17 @@ package main
 import (
   "log"
 
-  "github.com/nallenscott/nodb-go"
+  "github.com/nallenscott/pomdb-go"
 )
 
 type User struct {
   Name     string `json:"name" validate:"required"`
   Email    string `json:"email" validate:"required,email"`
-  Created  int64  `json:"created" nodb:"unix"`
-  Updated  int64  `json:"updated" nodb:"unix"`
+  Created  int64  `json:"created" pomdb:"unix"`
+  Updated  int64  `json:"updated" pomdb:"unix"`
 }
 
-var client = nodb.Client{
+var client = pomdb.Client{
   Bucket: "my-bucket",
   Region: "us-east-1",
 }
@@ -64,7 +64,7 @@ func main() {
     log.Fatal(err)
   }
 
-  users := client.Collection(nodb.Schema{
+  users := client.Collection(pomdb.Schema{
     Name:  "users",
     Model: User{},
   })
@@ -84,16 +84,16 @@ func main() {
 
 ## Creating a Client
 
-The client is used to manage the location and structure of the database. NoDB requires a dedicated bucket to store data, and the bucket must exist before the client is created.
+The client is used to manage the location and structure of the database. PomDB requires a dedicated bucket to store data, and the bucket must exist before the client is created.
 
 ```go
 import (
   "log"
 
-  "github.com/nallenscott/nodb-go"
+  "github.com/nallenscott/pomdb-go"
 )
 
-var client = nodb.Client{
+var client = pomdb.Client{
   Bucket: "my-bucket",
   Region: "us-east-1",
 }
@@ -117,7 +117,7 @@ type User struct {
   Email string `json:"email"`
 }
 
-schema := nodb.Schema{
+schema := pomdb.Schema{
   Name:  "users",
   Model: User{},
 }
@@ -127,11 +127,11 @@ schema := nodb.Schema{
 
 ### Object Identifiers
 
-NoDB automatically generates a unique ID for each object stored in the database. IDs are stored in the `uuid` field of the object in [UUID v4](https://www.ietf.org/archive/id/draft-ietf-uuidrev-rfc4122bis-10.html#name-uuid-version-4) format. There is no need to define this field in the schema.
+PomDB automatically generates a unique ID for each object stored in the database. IDs are stored in the `uuid` field of the object in [UUID v4](https://www.ietf.org/archive/id/draft-ietf-uuidrev-rfc4122bis-10.html#name-uuid-version-4) format. There is no need to define this field in the schema.
 
 ### Generated Fields
 
-NoDB can automatically generate values for certain types of fields. To enable this, add the `nodb` tag to the field, and set the value to the type of generator to use. The following types are supported:
+PomDB can automatically generate values for certain types of fields. To enable this, add the `pomdb` tag to the field, and set the value to the type of generator to use. The following types are supported:
 
 - `unix` - Generates a Unix timestamp in milliseconds
 
@@ -139,21 +139,21 @@ NoDB can automatically generate values for certain types of fields. To enable th
 type User struct {
   Name     string `json:"name"`
   Email    string `json:"email"`
-  Created  int64  `json:"created" nodb:"unix"`
-  Updated  int64  `json:"updated" nodb:"unix"`
+  Created  int64  `json:"created" pomdb:"unix"`
+  Updated  int64  `json:"updated" pomdb:"unix"`
 }
 ```
 
 ### Field Validation
 
-NoDB will validate the schema of each object before storing it in the database. If the object doesn't match the schema, an error will be returned. NoDB uses [go-playground/validator](https://github.com/go-playground/validator) for schema validation, and supports all of the tags defined by that package.
+PomDB will validate the schema of each object before storing it in the database. If the object doesn't match the schema, an error will be returned. PomDB uses [go-playground/validator](https://github.com/go-playground/validator) for schema validation, and supports all of the tags defined by that package.
 
 ```go
 type User struct {
   Name     string `json:"name" validate:"required"`
   Email    string `json:"email" validate:"required,email"`
-  Created  int64  `json:"created" nodb:"unix"`
-  Updated  int64  `json:"updated" nodb:"unix"`
+  Created  int64  `json:"created" pomdb:"unix"`
+  Updated  int64  `json:"updated" pomdb:"unix"`
 }
 ```
 
@@ -162,7 +162,7 @@ type User struct {
 Collections are groups of objects that share the same schema. If the collection doesn't exist, it will be created. If the schema doesn't match the existing collection, an error will be returned.
 
 ```go
-users := client.Collection(nodb.Schema{
+users := client.Collection(pomdb.Schema{
   Name:  "users",
   Model: User{},
 })
@@ -216,7 +216,7 @@ if err := user.Delete(); err != nil {
 #### <u>Find One</u>
 
 ```go
-query := users.FindOne(nodb.Query{
+query := users.FindOne(pomdb.Query{
     Field: "email",
     Value: "jane.doe@bar.com",
 })
@@ -233,10 +233,10 @@ user := query.Result().(User)
 #### <u>Find Many</u>
 
 ```go
-query := users.FindMany(nodb.Query{
+query := users.FindMany(pomdb.Query{
     Field: "name",
     Value: "Doe",
-    Flags: nodb.QueryFlagContains,
+    Flags: pomdb.QueryFlagContains,
 })
 
 if err := query.Execute(); err != nil {

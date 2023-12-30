@@ -1,4 +1,4 @@
-module github.com/nallenscott/nodb-go
+module github.com/pomdb/pomdb-go
 
 go 1.21.5
 

@@ -1,4 +1,4 @@
-package nodb
+package pomdb
 
 type Schema struct {
 	Name  string
