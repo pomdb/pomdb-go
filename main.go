@@ -2,6 +2,7 @@ package pomdb
 
 import (
 	"context"
+	"log"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -26,7 +27,7 @@ type Collection struct {
 }
 
 func (c *Client) Connect() error {
-	cfg, err := config.LoadDefaultConfig(
+	conf, err := config.LoadDefaultConfig(
 		context.TODO(),
 		config.WithRegion(c.Region),
 	)
@@ -34,7 +35,17 @@ func (c *Client) Connect() error {
 		return err
 	}
 
-	c.service = s3.NewFromConfig(cfg)
+	c.service = s3.NewFromConfig(conf)
+
+	head := &s3.HeadBucketInput{
+		Bucket: &c.Bucket,
+	}
+
+	if _, err := c.service.HeadBucket(context.TODO(), head); err != nil {
+		return err
+	}
+
+	log.Printf("Connected to %s", c.Bucket)
 
 	return nil
 }
