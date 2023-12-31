@@ -2,22 +2,21 @@ package pomdb
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"reflect"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
 type Client struct {
-	Bucket      string
-	Region      string
-	Schemas     map[string]*Schema
-	Collections map[string]*Collection
-	service     *s3.Client
+	Bucket  string
+	Region  string
+	Service *s3.Client
 }
 
 type Schema struct {
-	Name  string
 	Model interface{}
 }
 
@@ -35,7 +34,7 @@ func (c *Client) Connect() error {
 		return err
 	}
 
-	c.service = s3.NewFromConfig(conf)
+	c.Service = s3.NewFromConfig(conf)
 
 	if err := c.CheckBucket(); err != nil {
 		return err
@@ -51,24 +50,32 @@ func (c *Client) CheckBucket() error {
 		Bucket: &c.Bucket,
 	}
 
-	if _, err := c.service.HeadBucket(context.TODO(), head); err != nil {
+	if _, err := c.Service.HeadBucket(context.TODO(), head); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (c *Client) Collection(schema *Schema) *Collection {
-	c.Schemas[schema.Name] = schema
-
-	c.Collections[schema.Name] = &Collection{
-		Client: c,
-		Schema: schema,
+func (c *Collection) Create(model interface{}) error {
+	if err := c.CheckModel(model); err != nil {
+		return err
 	}
 
-	return c.Collections[schema.Name]
+	return nil
 }
 
-func (s *Collection) Create(model interface{}) error {
+func (c *Collection) CheckModel(model interface{}) error {
+	mtype := reflect.TypeOf(model)
+	stype := reflect.TypeOf(c.Schema.Model)
+
+	if mtype != stype {
+		return fmt.Errorf(
+			"model %s does not match schema %s",
+			mtype.Name(),
+			stype.Name(),
+		)
+	}
+
 	return nil
 }
