@@ -20,7 +20,7 @@
 - S3-backed [durability]() and [consistency]()
 - [Pessimistic]() and [optimistic]() concurrency control
 - Real-time [change data capture]() via S3 events
-- Schema [generation]() and [validation]()
+- Schema [migration]() and [validation]()
 
 ## Installation
 
