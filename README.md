@@ -28,9 +28,7 @@
 go get github.com/nallenscott/pomdb-go
 ```
 
-## Quick starts
-
-### Initializing a new database
+## Quick start
 
 ```go
 package main
@@ -73,45 +71,6 @@ func main() {
   }
 
   log.Printf("Created user %s at %d", user.UUID(), user.Created())
-}
-```
-
-### Querying an existing database
-
-```go
-package main
-
-import (
-  "log"
-
-  "github.com/nallenscott/pomdb-go"
-)
-
-var client = pomdb.Client{
-  Bucket: "my-bucket",
-  Region: "us-east-1",
-}
-
-func main() {
-  if err := client.Connect(); err != nil {
-    log.Fatal(err)
-  }
-
-  users := client.Collections().Get("users")
-
-  query := users.FindOne(pomdb.Query{
-    Field: "email",
-    Value: "john.doe",
-    Flags: pomdb.QueryFlagContains,
-  })
-
-  if err := query.Execute(); err != nil {
-    log.Fatal(err)
-  }
-
-  user := query.Result().(User)
-
-  log.Printf("Found user %s at %d", user.UUID(), user.Created())
 }
 ```
 
