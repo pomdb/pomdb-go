@@ -28,7 +28,9 @@
 go get github.com/nallenscott/pomdb-go
 ```
 
-## Quick start
+## Quick starts
+
+### Initializing a new database
 
 ```go
 package main
@@ -74,6 +76,45 @@ func main() {
 }
 ```
 
+### Querying an existing database
+
+```go
+package main
+
+import (
+  "log"
+
+  "github.com/nallenscott/pomdb-go"
+)
+
+var client = pomdb.Client{
+  Bucket: "my-bucket",
+  Region: "us-east-1",
+}
+
+func main() {
+  if err := client.Connect(); err != nil {
+    log.Fatal(err)
+  }
+
+  users := client.Collections().Get("users")
+
+  query := users.FindOne(pomdb.Query{
+    Field: "email",
+    Value: "john.doe",
+    Flags: pomdb.QueryFlagContains,
+  })
+
+  if err := query.Execute(); err != nil {
+    log.Fatal(err)
+  }
+
+  user := query.Result().(User)
+
+  log.Printf("Found user %s at %d", user.UUID(), user.Created())
+}
+```
+
 ## Creating a Client
 
 The client is used to manage the location and structure of the database. PomDB requires a dedicated bucket to store data, and the bucket must exist before the client is created.
@@ -101,7 +142,7 @@ func main() {
 
 ## Creating a Schema
 
-Schemas are used to manage the structure of collections. Schemas are defined using structs, with `json` tags to define the name of the field in the database object.
+Schemas are used to manage the structure of collections. Schemas are defined using structs, with `json` tags to define the name of the field in the database object. Schemas are optional, you can also store arbitrary data.
 
 ```go
 type User struct {
