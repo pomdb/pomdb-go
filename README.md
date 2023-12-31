@@ -56,12 +56,14 @@ func main() {
     log.Fatal(err)
   }
 
-  users := client.Collection(pomdb.Schema{
-    Name:  "users",
-    Model: User{},
-  })
+  users := &pomdb.Collection{
+    Client: client,
+    Schema: pomdb.Schema{
+      Model: User{},
+    },
+  }
 
-  user := users.Create(users.Model{
+  user := users.Create(User{
     Name:  "John Doe",
     Email: "john.doe@foo.com",
   })
