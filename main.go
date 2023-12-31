@@ -37,6 +37,16 @@ func (c *Client) Connect() error {
 
 	c.service = s3.NewFromConfig(conf)
 
+	if err := c.CheckBucket(); err != nil {
+		return err
+	}
+
+	log.Printf("Connected to %s", c.Bucket)
+
+	return nil
+}
+
+func (c *Client) CheckBucket() error {
 	head := &s3.HeadBucketInput{
 		Bucket: &c.Bucket,
 	}
@@ -44,8 +54,6 @@ func (c *Client) Connect() error {
 	if _, err := c.service.HeadBucket(context.TODO(), head); err != nil {
 		return err
 	}
-
-	log.Printf("Connected to %s", c.Bucket)
 
 	return nil
 }
