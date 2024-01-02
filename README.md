@@ -40,10 +40,9 @@ import (
 )
 
 type User struct {
+  pomdb.Model
   Name     string `json:"name" validate:"required"`
   Email    string `json:"email" validate:"required,email"`
-  Created  int64  `json:"created" pomdb:"unix"`
-  Updated  int64  `json:"updated" pomdb:"unix"`
 }
 
 var client = pomdb.Client{
@@ -52,27 +51,22 @@ var client = pomdb.Client{
 }
 
 func main() {
+
   if err := client.Connect(); err != nil {
     log.Fatal(err)
   }
 
-  users := &pomdb.Collection[User]{
-    Client: client,
-    Schema: pomdb.Schema{
-      Model: User{},
-    },
-  }
-
-  user := users.Create(User{
+  user := User{
     Name:  "John Doe",
     Email: "john.doe@foo.com",
-  })
-
-  if err := user.Save(); err != nil {
-    log.Fatal(err)
   }
 
-  log.Printf("Created user %s at %d", user.UUID(), user.Created())
+  res := client.Create(&user)
+  if res.Error != nil {
+    log.Fatal(res.Error)
+  }
+
+  log.Printf("Created user %s at %d", user.ID, user.CreatedAt)
 }
 ```
 

@@ -1,56 +1,44 @@
 package pomdb
 
 import (
-	"bytes"
 	"context"
 	"crypto/rand"
-	"encoding/json"
 	"fmt"
 	"log"
 	"reflect"
-	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
-type ObjectId [12]byte
+type ObjectID [12]byte
 
-func NewObjectId() ObjectId {
-	var id ObjectId
+type Statement struct {
+	Model interface{}
+}
+
+type Client struct {
+	Bucket    string
+	Region    string
+	Service   *s3.Client
+	Statement *Statement
+}
+
+type Model struct {
+	ID        ObjectID
+	CreatedAt int64
+	UpdatedAt int64
+	DeletedAt int64
+}
+
+func NewObjectID() ObjectID {
+	var id ObjectID
 	rand.Read(id[:]) // Replace with a more robust implementation.
 	return id
 }
 
-func (id ObjectId) String() string {
+func (id ObjectID) String() string {
 	return fmt.Sprintf("%x", id[:])
-}
-
-type Client struct {
-	Bucket  string
-	Region  string
-	Service *s3.Client
-}
-
-type Schema struct {
-	Timestamps bool
-}
-
-type Collection[T any] struct {
-	Client *Client
-	Schema Schema
-}
-
-type Generic interface {
-	Id() ObjectId
-}
-
-type Model[T any] struct {
-	Client *Client
-	Value  T
-	Get    func() T
-	Set    func(T)
 }
 
 func (c *Client) Connect() error {
@@ -85,58 +73,18 @@ func (c *Client) CheckBucket() error {
 	return nil
 }
 
-func (c *Collection[T]) NewModel(v *T) *Model[T] {
-	val := reflect.ValueOf(v)
-	if val.Kind() == reflect.Ptr {
-		val = val.Elem()
+func (c *Client) Create(model interface{}) error {
+	val := reflect.ValueOf(model)
+
+	if val.Kind() != reflect.Ptr || val.Elem().Kind() != reflect.Struct {
+		return fmt.Errorf("model must be a pointer to a struct")
 	}
 
-	// Set Id (ObjectId)
-	idField := val.FieldByName("Id")
-	if idField.IsValid() && idField.Type() == reflect.TypeOf(ObjectId{}) {
-		idField.Set(reflect.ValueOf(NewObjectId()))
+	if _, ok := val.Elem().FieldByName("ID").Interface().(ObjectID); !ok {
+		return fmt.Errorf("model must have ID field of type ObjectID")
 	}
 
-	// Set timestamps if required and fields exist
-	if c.Schema.Timestamps {
-		now := time.Now().Unix()
-		setTimestamp(val, "CreatedAt", now)
-		setTimestamp(val, "UpdatedAt", now)
-	}
-
-	return &Model[T]{
-		Client: c.Client,
-		Value:  *v,
-	}
-}
-
-// Helper function to set timestamp fields.
-func setTimestamp(val reflect.Value, fieldName string, timestamp int64) {
-	field := val.FieldByName(fieldName)
-	if field.IsValid() && field.Kind() == reflect.Int64 {
-		field.SetInt(timestamp)
-	}
-}
-
-func (m *Model[T]) Save() error {
-	data, err := json.Marshal(m.Value)
-	if err != nil {
-		return err
-	}
-
-	val := reflect.ValueOf(m.Value)
-	id := val.FieldByName("Id").String()
-
-	input := &s3.PutObjectInput{
-		Bucket: &m.Client.Bucket,
-		Key:    aws.String(id),
-		Body:   bytes.NewReader(data),
-	}
-
-	_, err = m.Client.Service.PutObject(context.TODO(), input)
-	if err != nil {
-		return err
-	}
+	val.Elem().FieldByName("ID").Set(reflect.ValueOf(NewObjectID()))
 
 	return nil
 }
