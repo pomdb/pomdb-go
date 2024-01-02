@@ -56,7 +56,7 @@ func main() {
     log.Fatal(err)
   }
 
-  users := &pomdb.Collection{
+  users := &pomdb.Collection[User]{
     Client: client,
     Schema: pomdb.Schema{
       Model: User{},
@@ -112,7 +112,6 @@ type User struct {
 }
 
 schema := pomdb.Schema{
-  Name:  "users",
   Model: User{},
 }
 
@@ -156,10 +155,10 @@ type User struct {
 Collections are groups of objects that share the same schema. If the collection doesn't exist, it will be created. If the schema doesn't match the existing collection, an error will be returned.
 
 ```go
-users := client.Collection(pomdb.Schema{
-  Name:  "users",
-  Model: User{},
-})
+users := pomdb.Collection[User]{
+  Client: client,
+  Schema: schema,
+}
 
 // ...
 ```
