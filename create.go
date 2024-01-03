@@ -51,7 +51,7 @@ func (c *Client) Create(i interface{}) error {
 		Body:   strings.NewReader(string(obj)),
 	}
 
-	if _, err := c.S3.PutObject(context.TODO(), put); err != nil {
+	if _, err := c.Service.PutObject(context.TODO(), put); err != nil {
 		return err
 	}
 

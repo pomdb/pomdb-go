@@ -9,9 +9,9 @@ import (
 )
 
 type Client struct {
-	Bucket string
-	Region string
-	S3     *s3.Client
+	Bucket  string
+	Region  string
+	Service *s3.Client
 }
 
 func (c *Client) Connect() error {
@@ -23,7 +23,7 @@ func (c *Client) Connect() error {
 		return err
 	}
 
-	c.S3 = s3.NewFromConfig(conf)
+	c.Service = s3.NewFromConfig(conf)
 
 	if err := c.CheckBucket(); err != nil {
 		return err
@@ -39,7 +39,7 @@ func (c *Client) CheckBucket() error {
 		Bucket: &c.Bucket,
 	}
 
-	if _, err := c.S3.HeadBucket(context.TODO(), head); err != nil {
+	if _, err := c.Service.HeadBucket(context.TODO(), head); err != nil {
 		return err
 	}
 
