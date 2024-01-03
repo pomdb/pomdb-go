@@ -34,39 +34,37 @@ go get github.com/nallenscott/pomdb-go
 package main
 
 import (
-  "log"
+	"log"
 
-  "github.com/nallenscott/pomdb-go"
+  "github.com/pomdb/pomdb-go"
 )
 
 type User struct {
-  pomdb.Model
-  Name     string `json:"name" validate:"required"`
-  Email    string `json:"email" validate:"required,email"`
+	pomdb.Model
+	FullName string `json:"full_name" validate:"required"`
+	Email    string `json:"email" validate:"required,email"`
 }
 
 var client = pomdb.Client{
-  Bucket: "my-bucket",
-  Region: "us-east-1",
+	Bucket: "my-bucket",
+	Region: "us-east-1",
 }
 
 func main() {
+	if err := client.Connect(); err != nil {
+		log.Fatal(err)
+	}
 
-  if err := client.Connect(); err != nil {
-    log.Fatal(err)
-  }
+	user := User{
+		FullName: "John Doe",
+		Email:    "john.doe@foo.com",
+	}
 
-  user := User{
-    Name:  "John Doe",
-    Email: "john.doe@foo.com",
-  }
+	if err := client.Create(&user); err != nil {
+		log.Fatal(err)
+	}
 
-  res := client.Create(&user)
-  if res.Error != nil {
-    log.Fatal(res.Error)
-  }
-
-  log.Printf("Created user %s at %d", user.ID, user.CreatedAt)
+	log.Printf("Created user %s at %d", user.ID, user.CreatedAt)
 }
 ```
 
