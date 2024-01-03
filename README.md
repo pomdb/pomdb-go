@@ -93,18 +93,15 @@ func main() {
 }
 ```
 
-## Creating a Schema
+## Creating a Model
 
-Schemas are used to manage the structure of collections. Schemas are defined using structs, with `json` tags to define the name of the field in the database object. Schemas are optional, you can also store arbitrary data.
+Models are used to manage the structure of collections. Models are defined using structs, with `json` tags to serialize the data.
 
 ```go
 type User struct {
-  Name  string `json:"name"`
-  Email string `json:"email"`
-}
-
-schema := pomdb.Schema{
-  Model: User{},
+  pomdb.Model
+  FullName string `json:"full_name"`
+  Email    string `json:"email"`
 }
 
 //...
@@ -112,47 +109,61 @@ schema := pomdb.Schema{
 
 ### Object Identifiers
 
-PomDB automatically generates a unique ID for each object stored in the database. IDs are stored in the `uuid` field of the object in [UUID v4](https://www.ietf.org/archive/id/draft-ietf-uuidrev-rfc4122bis-10.html#name-uuid-version-4) format. There is no need to define this field in the schema.
-
-### Generated Fields
-
-PomDB can automatically generate values for certain types of fields. To enable this, add the `pomdb` tag to the field, and set the value to the type of generator to use. The following types are supported:
-
-- `unix` - Generates a Unix timestamp in milliseconds
+PomDB automatically generates a ObjectID for each object stored in the database. IDs are stored in the `ID` field of the object in [ObjectId](https://www.mongodb.com/docs/manual/reference/bson-types/#std-label-objectid) format. Models must embed the `pomdb.Model` struct, or define an `ID` field of type `pomdb.ObjectID`:
 
 ```go
 type User struct {
-  Name     string `json:"name"`
+  pomdb.Model
+  FullName string `json:"full_name"`
   Email    string `json:"email"`
-  Created  int64  `json:"created" pomdb:"unix"`
-  Updated  int64  `json:"updated" pomdb:"unix"`
 }
+
+// OR
+
+type User struct {
+  ID       pomdb.ObjectID `json:"id"`
+  FullName string         `json:"full_name"`
+  Email    string         `json:"email"`
+}
+
+//...
+```
+
+### Object Timestamps
+
+When embedding the `pomdb.Model` struct, PomDB will automatically add `CreatedAt`, `UpdatedAt`, and `DeletedAt` fields to the model. You can choose to omit these fields, or define them manually. If you choose to define them manually, they must use the same names and types as the fields defined by PomDB:
+
+```go
+type User struct {
+  pomdb.Model
+  FullName string `json:"full_name"`
+  Email    string `json:"email"`
+}
+
+// OR
+
+type User struct {
+  ID        pomdb.ObjectID  `json:"id"`
+  FullName  string          `json:"full_name"`
+  Email     string          `json:"email"`
+  CreatedAt pomdb.Timestamp `json:"created_at"`
+  UpdatedAt pomdb.Timestamp `json:"updated_at"`
+  DeletedAt pomdb.Timestamp `json:"deleted_at"`
+}
+
+//...
 ```
 
 ### Field Validation
 
-PomDB will validate the schema of each object before storing it in the database. If the object doesn't match the schema, an error will be returned. PomDB uses [go-playground/validator](https://github.com/go-playground/validator) for schema validation, and supports all of the tags defined by that package.
+PomDB will validate the model before storing it in the database. PomDB uses [go-playground/validator](https://github.com/go-playground/validator) for validation, and supports all of the tags defined by that package:
 
 ```go
 type User struct {
-  Name     string `json:"name" validate:"required"`
+  pomdb.Model
+  FullName string `json:"full_name" validate:"required"`
   Email    string `json:"email" validate:"required,email"`
-  Created  int64  `json:"created" pomdb:"unix"`
-  Updated  int64  `json:"updated" pomdb:"unix"`
 }
-```
-
-## Creating a Collection
-
-Collections are groups of objects that share the same schema. If the collection doesn't exist, it will be created. If the schema doesn't match the existing collection, an error will be returned.
-
-```go
-users := pomdb.Collection[User]{
-  Client: client,
-  Schema: schema,
-}
-
-// ...
 ```
 
 ## Working with Objects
@@ -160,7 +171,7 @@ users := pomdb.Collection[User]{
 Objects are stored in collections, and represent a single record in the database. Objects can be found in S3 under the following path:
 
 ```
-<bucket>/<collection>/<uuid>.json
+<bucket>/<pluralized_model_name>/<object_id>.json
 ```
 
 ### Creating
