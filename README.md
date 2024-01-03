@@ -36,7 +36,7 @@ package main
 import (
 	"log"
 
-  "github.com/pomdb/pomdb-go"
+	"github.com/pomdb/pomdb-go"
 )
 
 type User struct {

@@ -1,28 +1,30 @@
-package pomdb
+package main
 
 import (
 	"log"
+
+	"github.com/pomdb/pomdb-go"
 )
 
 type User struct {
-	Model
-	Name  string `json:"name" validate:"required"`
-	Email string `json:"email" validate:"required,email"`
+	pomdb.Model
+	FullName string `json:"full_name" validate:"required"`
+	Email    string `json:"email" validate:"required,email"`
 }
 
-var client = Client{
+var client = pomdb.Client{
 	Bucket: "my-bucket",
 	Region: "us-east-1",
 }
 
-func Test() {
+func main() {
 	if err := client.Connect(); err != nil {
 		log.Fatal(err)
 	}
 
 	user := User{
-		Name:  "John Doe",
-		Email: "john.doe@foo.com",
+		FullName: "John Doe",
+		Email:    "john.doe@foo.com",
 	}
 
 	if err := client.Create(&user); err != nil {
