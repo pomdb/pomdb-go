@@ -3,6 +3,7 @@ package pomdb
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"reflect"
 
 	"github.com/gertd/go-pluralize"
@@ -14,8 +15,20 @@ var pluralizer = pluralize.NewClient()
 // GetCollectionName returns the name of the collection for the given model,
 // which is the plural form of the model's name in snake case.
 func GetCollectionName(i interface{}) string {
-	t := reflect.TypeOf(i)
-	return pluralizer.Plural(strcase.ToSnake(t.Name()))
+	// Get the type of i, dereferencing if it's a pointer
+	typ := reflect.TypeOf(i)
+	if typ.Kind() == reflect.Ptr {
+		typ = typ.Elem()
+	}
+
+	// Convert the name to snake case and pluralize it
+	name := pluralizer.Plural(strcase.ToSnake(typ.Name()))
+
+	// Log the original and final names
+	log.Printf("GetCollectionName: %s -> %s", typ.Name(), name)
+
+	// Return the pluralized, snake_case name
+	return name
 }
 
 // GetModelName returns the name of the model for the given collection,
@@ -27,26 +40,31 @@ func GetModelName(collection string) string {
 // MarshalJSON takes a model and returns a JSON representation of it,
 // converting the field names to their database equivalents.
 func MarshalJSON(i interface{}) ([]byte, error) {
-	// Ensure the provided interface is a pointer
-	if reflect.TypeOf(i).Kind() != reflect.Ptr {
-		return nil, errors.New("model must be a pointer to a struct")
+	// Reflect the type and value of i, dereferencing if it's a pointer
+	t := reflect.TypeOf(i)
+	v := reflect.ValueOf(i)
+
+	if t.Kind() == reflect.Ptr {
+		t = t.Elem()
+		v = v.Elem()
 	}
 
-	// Dereference the pointer to get the struct value
-	structValue := reflect.ValueOf(i).Elem()
-	structType := structValue.Type()
+	// Return an error if i is not a struct
+	if t.Kind() != reflect.Struct {
+		return nil, errors.New("input must be a struct or pointer to a struct")
+	}
 
 	// Initialize the data map
 	data := make(map[string]interface{})
 
-	for i := 0; i < structValue.NumField(); i++ {
-		field := structValue.Field(i)
-		typeField := structType.Field(i)
+	for i := 0; i < t.NumField(); i++ {
+		typeField := t.Field(i)
+		field := v.Field(i)
 
 		// Use the json tag as the key if it's set, otherwise fall back to snake_case
 		jsonKey := typeField.Tag.Get("json")
 		if jsonKey == "" {
-			jsonKey = strcase.ToSnake(typeField.Name) // Convert field name to snake_case
+			jsonKey = strcase.ToSnake(typeField.Name)
 		}
 
 		data[jsonKey] = field.Interface()
@@ -57,41 +75,40 @@ func MarshalJSON(i interface{}) ([]byte, error) {
 
 // UnmarshalJSON takes a JSON representation of a model and returns
 // a model with the field names converted to their Go equivalents.
-func UnmarshalJSON(data []byte, ptr interface{}) error {
-	// Ensure the provided interface is a pointer
-	if reflect.TypeOf(ptr).Kind() != reflect.Ptr {
-		return errors.New("model must be a pointer to a struct")
+func UnmarshalJSON(data []byte, i interface{}) error {
+	// Check that i is a pointer
+	if reflect.TypeOf(i).Kind() != reflect.Ptr {
+		return errors.New("input must be a pointer")
 	}
 
-	// Temporary map to hold the JSON data
+	// Unmarshal JSON into a temporary map
 	tempData := make(map[string]interface{})
-	err := json.Unmarshal(data, &tempData)
-	if err != nil {
+	if err := json.Unmarshal(data, &tempData); err != nil {
 		return err
 	}
 
-	// Dereference the pointer to get the struct value
-	structValue := reflect.ValueOf(ptr).Elem()
-	structType := structValue.Type()
+	// Create a map for JSON keys to struct field indexes
+	t := reflect.TypeOf(i).Elem()
+	fieldIndexes := make(map[string]int)
+	for i := 0; i < t.NumField(); i++ {
+		typeField := t.Field(i)
 
-	// Create a map to easily look up field indexes by their JSON (snake_case) keys
-	fieldMap := make(map[string]int)
-	for i := 0; i < structType.NumField(); i++ {
-		field := structType.Field(i)
-		jsonTag := field.Tag.Get("json")
-		if jsonTag == "" {
-			jsonTag = strcase.ToSnake(field.Name) // Convert field name to snake_case
+		// Determine the JSON key for the field
+		jsonKey := typeField.Tag.Get("json")
+		if jsonKey == "" {
+			jsonKey = strcase.ToSnake(typeField.Name)
 		}
-		fieldMap[jsonTag] = i
+
+		fieldIndexes[jsonKey] = i
 	}
 
-	// Iterate over the JSON keys and set the corresponding struct fields
-	for key, jsonValue := range tempData {
-		if fieldIndex, ok := fieldMap[key]; ok {
-			structField := structValue.Field(fieldIndex)
-			fieldValue := reflect.ValueOf(jsonValue)
-			if structField.Type() == fieldValue.Type() && structField.CanSet() {
-				structField.Set(fieldValue)
+	// Set the corresponding struct fields
+	v := reflect.ValueOf(i).Elem()
+	for key, value := range tempData {
+		if index, ok := fieldIndexes[key]; ok {
+			field := v.Field(index)
+			if field.CanSet() {
+				field.Set(reflect.ValueOf(value))
 			}
 		}
 	}
