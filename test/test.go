@@ -13,7 +13,7 @@ type User struct {
 }
 
 var client = pomdb.Client{
-	Bucket: "my-bucket",
+	Bucket: "pomdb",
 	Region: "us-east-1",
 }
 
