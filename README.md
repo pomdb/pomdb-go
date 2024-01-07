@@ -135,13 +135,13 @@ type User struct {
 
 ### Object Timestamps
 
-When embedding the `pomdb.Model` struct, PomDB will automatically add `CreatedAt`, `UpdatedAt`, and `DeletedAt` fields to the model. You can choose to omit these fields, or define them manually. If you choose to define them manually, they must use the same names and types as the fields defined by PomDB:
+When embedding the `pomdb.Model` struct, its fields are automatically added to your model. You can choose to omit these fields, or define them manually. If you choose to define them manually, they must use the same names and types as the fields defined by PomDB:
 
 ```go
 type User struct {
   pomdb.Model
-  FullName string `json:"full_name"`
-  Email    string `json:"email"`
+  FullName  string `json:"full_name"`
+  Email     string `json:"email"`
 }
 
 // OR
