@@ -46,7 +46,7 @@ type User struct {
 }
 
 var client = pomdb.Client{
-	Bucket: "my-bucket",
+	Bucket: "pomdb",
 	Region: "us-east-1",
 }
 
@@ -80,7 +80,7 @@ import (
 )
 
 var client = pomdb.Client{
-  Bucket: "my-bucket",
+  Bucket: "pomdb",
   Region: "us-east-1",
 }
 
@@ -109,23 +109,11 @@ type User struct {
 
 ### Object Conventions
 
-PomDB will convert the model name to snake case and pluralize it for the collection name. For example, the `User` model will be stored in the `users` collection. PomDB also converts the field names to snake case when serializing the object. For example, the `FullName` field will be serilized as `full_name`. You can override this behavior by specifying a naming strategy when creating the client:
-
-```go
-
-var client = pomdb.Client{
-  Bucket: "my-bucket",
-  Region: "us-east-1",
-  NamingStrategy: pomdb.NamingStrategy{
-    Collections: pomdb.CamelCasePlural,
-    Fields:      pomdb.LowerCamelCase,
-  },
-}
-```
+PomDB will convert the model name to snake case and pluralize it for the collection name. For example, the `User` model will be stored in the `users` collection. Fields are serialized using the `json` tag, and must be exported.
 
 ### Object Identifiers
 
-PomDB automatically generates a ObjectID for each object stored in the database. IDs are stored in the `ID` field of the object in [ObjectId](https://www.mongodb.com/docs/manual/reference/bson-types/#std-label-objectid) format. Models must embed the `pomdb.Model` struct, or define an `ID` field of type `pomdb.ObjectID`:
+PomDB automatically generates an ObjectID for each object stored in the database. IDs are stored in the `ID` field of the object in [ObjectId](https://www.mongodb.com/docs/manual/reference/bson-types/#std-label-objectid) format. Models must embed the `pomdb.Model` struct, or define an `ID` field of type `pomdb.ObjectID`:
 
 ```go
 type User struct {

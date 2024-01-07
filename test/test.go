@@ -31,5 +31,5 @@ func main() {
 		log.Fatal(err)
 	}
 
-	log.Printf("Created user %s at %d", user.ID, user.CreatedAt)
+	log.Printf("Created user %s at %d", user.ID.String(), user.CreatedAt)
 }
