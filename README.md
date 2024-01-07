@@ -25,7 +25,7 @@
 ## Installation
 
 ```bash
-go get github.com/nallenscott/pomdb-go
+go get github.com/pomdb/pomdb-go
 ```
 
 ## Quick start
