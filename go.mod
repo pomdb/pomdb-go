@@ -7,7 +7,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.26.3
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.48.0
 	github.com/gertd/go-pluralize v0.2.1
-	github.com/google/uuid v1.5.0
 	github.com/iancoleman/strcase v0.3.0
 )
 
