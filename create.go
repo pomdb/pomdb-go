@@ -2,6 +2,7 @@ package pomdb
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
@@ -40,14 +41,14 @@ func (c *Client) Create(i interface{}) error {
 		field.SetInt(0)
 	}
 
-	obj, err := MarshalJSON(i)
+	obj, err := json.Marshal(i)
 	if err != nil {
 		return err
 	}
 
 	put := &s3.PutObjectInput{
 		Bucket: &c.Bucket,
-		Key:    aws.String(co + "/" + id.String()),
+		Key:    aws.String(co + "/" + id.String() + ".json"),
 		Body:   strings.NewReader(string(obj)),
 	}
 
