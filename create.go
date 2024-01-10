@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"reflect"
 	"strings"
 	"time"
@@ -46,12 +47,51 @@ func (c *Client) Create(i interface{}) error {
 		return err
 	}
 
-	put := &s3.PutObjectInput{
+	var record []byte
+
+	// Create input for HeadObject
+	head := &s3.HeadObjectInput{
 		Bucket: &c.Bucket,
-		Key:    aws.String(co + "/" + id.String() + ".json"),
-		Body:   strings.NewReader(string(obj)),
+		Key:    aws.String(co + ".json"),
 	}
 
+	if _, err := c.Service.HeadObject(context.TODO(), head); err == nil {
+		// Create input for GetObject
+		get := &s3.GetObjectInput{
+			Bucket: &c.Bucket,
+			Key:    aws.String(co + ".json"),
+		}
+
+		// Fetch the object from S3
+		res, err := c.Service.GetObject(context.TODO(), get)
+		if err != nil {
+			return err
+		}
+
+		// Put contents of object into record
+		record, err = io.ReadAll(res.Body)
+		if err != nil {
+			return err
+		}
+
+		// Close the response body
+		res.Body.Close()
+	}
+
+	// Append newline to object
+	obj = append(obj, []byte("\n")...)
+
+	// Append object to record
+	record = append(record, obj...)
+
+	// Create input for PutObject
+	put := &s3.PutObjectInput{
+		Bucket: &c.Bucket,
+		Key:    aws.String(co + ".json"),
+		Body:   strings.NewReader(string(record)),
+	}
+
+	// Put the object into S3
 	if _, err := c.Service.PutObject(context.TODO(), put); err != nil {
 		return err
 	}
