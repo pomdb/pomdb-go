@@ -181,12 +181,12 @@ Objects are stored in collections, and represent a single record in the database
 ### Creating
 
 ```go
-user := users.Create(users.Model{
+user := User{
   Name:  "John Doe",
   Email: "john.doe@foo.com",
-})
+}
 
-if err := user.Save(); err != nil {
+if err := client.Create(&user); err != nil {
   log.Fatal(err)
 }
 
@@ -198,16 +198,16 @@ if err := user.Save(); err != nil {
 ```go
 user.Email = "jane.doe@bar.com"
 
-if err := user.Save(); err != nil {
-    log.Fatal(err)
+if err := client.Update(&user); err != nil {
+  log.Fatal(err)
 }
 ```
 
 ### Deleting
 
 ```go
-if err := user.Delete(); err != nil {
-    log.Fatal(err)
+if err := client.Delete(&user); err != nil {
+  log.Fatal(err)
 }
 ```
 
@@ -216,16 +216,17 @@ if err := user.Delete(); err != nil {
 #### <u>Find One</u>
 
 ```go
-query := users.FindOne(pomdb.Query{
-    Field: "email",
-    Value: "jane.doe@bar.com",
-})
-
-if err := query.Execute(); err != nil {
-    log.Fatal(err)
+query := pomdb.Query{
+  Field: "email",
+  Value: "jane.doe@bar.com",
 }
 
-user := query.Result().(User)
+obj, err := client.FindOne("users", query)
+if err != nil {
+  log.Fatal(err)
+}
+
+user := obj.(*User)
 
 // ...
 ```
@@ -233,17 +234,18 @@ user := query.Result().(User)
 #### <u>Find Many</u>
 
 ```go
-query := users.FindMany(pomdb.Query{
-    Field: "name",
-    Value: "Doe",
-    Flags: pomdb.QueryFlagContains,
-})
-
-if err := query.Execute(); err != nil {
-    log.Fatal(err)
+query := pomdb.Query{
+  Field: "name",
+  Value: "Doe",
+  Flags: pomdb.QueryFlagContains,
 }
 
-users := query.Result().([]User)
+objs, err := client.FindMany("users", query)
+if err != nil {
+  log.Fatal(err)
+}
+
+users := objs.([]User)
 
 // ...
 ```
@@ -251,13 +253,12 @@ users := query.Result().([]User)
 #### <u>Find All</u>
 
 ```go
-query := users.FindAll()
-
-if err := query.Execute(); err != nil {
-    log.Fatal(err)
+objs, err := client.FindAll("users")
+if err != nil {
+  log.Fatal(err)
 }
 
-users := query.Result().([]User)
+users := objs.([]User)
 
 // ...
 ```
