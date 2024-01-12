@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/antchfx/jsonquery"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
@@ -24,6 +26,23 @@ func (c *Client) Create(i interface{}) error {
 
 	if _, ok := rv.Elem().FieldByName("ID").Interface().(ObjectID); !ok {
 		return fmt.Errorf("model must have ID field of type ObjectID")
+	}
+
+	// Create a var to hold a reference to the unqiue field
+	var uniqueField string
+	var uniqueValue string
+
+	for j := 0; j < rv.Elem().NumField(); j++ {
+		field := rv.Elem().Type().Field(j)
+		value := rv.Elem().Field(j).String()
+		if strings.Contains(field.Tag.Get("pomdb"), "unique") {
+			tagname := field.Tag.Get("json")
+
+			log.Printf("model has unique field: %s", tagname)
+
+			uniqueField = tagname
+			uniqueValue = value
+		}
 	}
 
 	id := NewObjectID()
@@ -76,6 +95,28 @@ func (c *Client) Create(i interface{}) error {
 
 		// Close the response body
 		res.Body.Close()
+	}
+
+	// Read the record line by line and check if the unique field matches the value
+	// of the unique field in the model
+	for _, line := range strings.Split(string(record), "\n") {
+		if line == "" {
+			continue
+		}
+
+		doc, err := jsonquery.Parse(strings.NewReader(line))
+		if err != nil {
+			return fmt.Errorf("failed to parse json: %s", err)
+		}
+
+		prop := jsonquery.FindOne(doc, uniqueField)
+		if prop == nil {
+			continue
+		}
+
+		if prop.Value() == uniqueValue {
+			return fmt.Errorf("%s %s already exists", uniqueField, uniqueValue)
+		}
 	}
 
 	// Append newline to object
