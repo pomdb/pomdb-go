@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/antchfx/jsonquery"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 )
 
 func (c *Client) Create(i interface{}) error {
@@ -75,48 +75,74 @@ func (c *Client) Create(i interface{}) error {
 	}
 
 	if _, err := c.Service.HeadObject(context.TODO(), head); err == nil {
+		// Query the collection for the unique field using s3 select
+		query := fmt.Sprintf("SELECT * FROM S3Object s WHERE s.%s = '%s'", uniqueField, uniqueValue)
+
+		// Create input for SelectObjectContent
+		selectInput := &s3.SelectObjectContentInput{
+			Bucket:         &c.Bucket,
+			Key:            aws.String(co + ".json"),
+			Expression:     aws.String(query),
+			ExpressionType: types.ExpressionTypeSql,
+			InputSerialization: &types.InputSerialization{
+				JSON: &types.JSONInput{
+					Type: types.JSONTypeDocument,
+				},
+			},
+			OutputSerialization: &types.OutputSerialization{
+				JSON: &types.JSONOutput{
+					RecordDelimiter: aws.String("\n"),
+				},
+			},
+		}
+
+		// Execute the query
+		sel, err := c.Service.SelectObjectContent(context.TODO(), selectInput)
+		if err != nil {
+			return fmt.Errorf("failed to execute query: %s", err)
+		}
+
+		// Read the results
+		for event := range sel.GetStream().Events() {
+			switch event := event.(type) {
+			case *types.SelectObjectContentEventStreamMemberRecords:
+				record = event.Value.Payload
+			}
+
+			if record != nil {
+				log.Printf("found record: %s", record)
+				break
+			}
+		}
+
+		// Close the response body
+		sel.GetStream().Close()
+
+		// If the record is not nil, then the unique field already exists
+		if record != nil {
+			return fmt.Errorf("unique field %s already exists", uniqueField)
+		}
+
 		// Create input for GetObject
-		get := &s3.GetObjectInput{
+		getInput := &s3.GetObjectInput{
 			Bucket: &c.Bucket,
 			Key:    aws.String(co + ".json"),
 		}
 
 		// Fetch the object from S3
-		res, err := c.Service.GetObject(context.TODO(), get)
+		get, err := c.Service.GetObject(context.TODO(), getInput)
 		if err != nil {
 			return err
 		}
 
 		// Put contents of object into record
-		record, err = io.ReadAll(res.Body)
+		record, err = io.ReadAll(get.Body)
 		if err != nil {
 			return err
 		}
 
 		// Close the response body
-		res.Body.Close()
-	}
-
-	// Read the record line by line and check if the unique field matches the value
-	// of the unique field in the model
-	for _, line := range strings.Split(string(record), "\n") {
-		if line == "" {
-			continue
-		}
-
-		doc, err := jsonquery.Parse(strings.NewReader(line))
-		if err != nil {
-			return fmt.Errorf("failed to parse json: %s", err)
-		}
-
-		prop := jsonquery.FindOne(doc, uniqueField)
-		if prop == nil {
-			continue
-		}
-
-		if prop.Value() == uniqueValue {
-			return fmt.Errorf("%s %s already exists", uniqueField, uniqueValue)
-		}
+		get.Body.Close()
 	}
 
 	// Append newline to object
@@ -126,14 +152,14 @@ func (c *Client) Create(i interface{}) error {
 	record = append(record, obj...)
 
 	// Create input for PutObject
-	put := &s3.PutObjectInput{
+	putInput := &s3.PutObjectInput{
 		Bucket: &c.Bucket,
 		Key:    aws.String(co + ".json"),
 		Body:   strings.NewReader(string(record)),
 	}
 
 	// Put the object into S3
-	if _, err := c.Service.PutObject(context.TODO(), put); err != nil {
+	if _, err := c.Service.PutObject(context.TODO(), putInput); err != nil {
 		return err
 	}
 
