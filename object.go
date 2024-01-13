@@ -1,13 +1,10 @@
 package pomdb
 
 import (
-	"crypto/rand"
 	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"fmt"
-	"io"
 	"sync/atomic"
 	"time"
 )
@@ -15,14 +12,14 @@ import (
 // ErrInvalidHex indicates that a hex string cannot be converted to an ObjectID.
 var ErrInvalidHex = errors.New("the provided hex string is not a valid ObjectID")
 
-// ObjectID is the BSON ObjectID type represented as a 12-byte array.
-type ObjectID [12]byte
-
 // NilObjectID is the zero value for ObjectID.
 var NilObjectID ObjectID
 
 var objectIDCounter = readRandomUint32()
 var processUnique = processUniqueBytes()
+
+// ObjectID is the BSON ObjectID type represented as a 12-byte array.
+type ObjectID [12]byte
 
 // NewObjectID generates a new ObjectID.
 func NewObjectID() ObjectID {
@@ -68,26 +65,4 @@ func (id *ObjectID) UnmarshalJSON(b []byte) error {
 
 	copy(id[:], decoded)
 	return nil
-}
-
-func processUniqueBytes() [5]byte {
-	var b [5]byte
-	if _, err := io.ReadFull(rand.Reader, b[:]); err != nil {
-		panic(fmt.Errorf("cannot generate process unique bytes: %v", err))
-	}
-	return b
-}
-
-func readRandomUint32() uint32 {
-	var b [4]byte
-	if _, err := io.ReadFull(rand.Reader, b[:]); err != nil {
-		panic(fmt.Errorf("cannot generate random uint32: %v", err))
-	}
-	return binary.BigEndian.Uint32(b[:])
-}
-
-func putUint24(b []byte, v uint32) {
-	b[0] = byte(v >> 16)
-	b[1] = byte(v >> 8)
-	b[2] = byte(v)
 }

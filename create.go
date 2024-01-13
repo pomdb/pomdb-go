@@ -18,7 +18,7 @@ import (
 func (c *Client) Create(i interface{}) error {
 	rv := reflect.ValueOf(i)
 
-	co := GetCollectionName(i)
+	co := getCollectionName(i)
 
 	if rv.Kind() != reflect.Ptr || rv.Elem().Kind() != reflect.Struct {
 		return fmt.Errorf("model must be a pointer to a struct")
