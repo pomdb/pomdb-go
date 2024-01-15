@@ -3,9 +3,9 @@ package pomdb
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
-	"log"
 	"reflect"
 	"strings"
 	"time"
@@ -18,8 +18,6 @@ import (
 func (c *Client) Create(i interface{}) error {
 	rv := reflect.ValueOf(i)
 
-	co := getCollectionName(i)
-
 	if rv.Kind() != reflect.Ptr || rv.Elem().Kind() != reflect.Struct {
 		return fmt.Errorf("model must be a pointer to a struct")
 	}
@@ -28,26 +26,7 @@ func (c *Client) Create(i interface{}) error {
 		return fmt.Errorf("model must have ID field of type ObjectID")
 	}
 
-	// Create a var to hold a reference to the unqiue field
-	var uniqueField string
-	var uniqueValue string
-
-	for j := 0; j < rv.Elem().NumField(); j++ {
-		field := rv.Elem().Type().Field(j)
-		value := rv.Elem().Field(j).String()
-		if strings.Contains(field.Tag.Get("pomdb"), "unique") {
-			tagname := field.Tag.Get("json")
-
-			log.Printf("model has unique field: %s", tagname)
-
-			uniqueField = tagname
-			uniqueValue = value
-		}
-	}
-
-	id := NewObjectID()
-
-	rv.Elem().FieldByName("ID").Set(reflect.ValueOf(id))
+	rv.Elem().FieldByName("ID").Set(reflect.ValueOf(NewObjectID()))
 
 	if field := rv.Elem().FieldByName("CreatedAt"); field.IsValid() {
 		field.SetInt(time.Now().Unix())
@@ -61,22 +40,11 @@ func (c *Client) Create(i interface{}) error {
 		field.SetInt(0)
 	}
 
-	obj, err := json.Marshal(i)
-	if err != nil {
-		return err
-	}
+	co := getCollectionName(i)
 
-	var record []byte
-
-	// Create input for HeadObject
-	head := &s3.HeadObjectInput{
-		Bucket: &c.Bucket,
-		Key:    aws.String(co + ".json"),
-	}
-
-	if _, err := c.Service.HeadObject(context.TODO(), head); err == nil {
-		// Query the collection for the unique field using s3 select
-		query := fmt.Sprintf("SELECT * FROM S3Object s WHERE s.%s = '%s'", uniqueField, uniqueValue)
+	if uf, uv := getUniqueFieldMeta(rv); uf != "" {
+		// Create query for SelectObjectContent
+		query := fmt.Sprintf("SELECT * FROM S3Object s WHERE s.%s = '%s'", uf, uv)
 
 		// Create input for SelectObjectContent
 		selectInput := &s3.SelectObjectContentInput{
@@ -99,50 +67,58 @@ func (c *Client) Create(i interface{}) error {
 		// Execute the query
 		sel, err := c.Service.SelectObjectContent(context.TODO(), selectInput)
 		if err != nil {
-			return fmt.Errorf("failed to execute query: %s", err)
+			var noSuchKey *types.NoSuchKey
+			if errors.As(err, &noSuchKey) {
+				return fmt.Errorf("collection %s does not exist", co)
+			}
 		}
 
 		// Read the results
 		for event := range sel.GetStream().Events() {
+			var record []byte
 			switch event := event.(type) {
 			case *types.SelectObjectContentEventStreamMemberRecords:
 				record = event.Value.Payload
 			}
 
 			if record != nil {
-				log.Printf("found record: %s", record)
-				break
+				return fmt.Errorf("unique field %s already exists: %s", uf, record)
 			}
 		}
 
 		// Close the response body
 		sel.GetStream().Close()
+	}
 
-		// If the record is not nil, then the unique field already exists
-		if record != nil {
-			return fmt.Errorf("unique field %s already exists", uniqueField)
+	// Create input for GetObject
+	getInput := &s3.GetObjectInput{
+		Bucket: &c.Bucket,
+		Key:    aws.String(co + ".json"),
+	}
+
+	// Fetch the object from S3
+	get, err := c.Service.GetObject(context.TODO(), getInput)
+	if err != nil {
+		var noSuchKey *types.NoSuchKey
+		if errors.As(err, &noSuchKey) {
+			return fmt.Errorf("failed to fetch object: %s", err)
 		}
+	}
 
-		// Create input for GetObject
-		getInput := &s3.GetObjectInput{
-			Bucket: &c.Bucket,
-			Key:    aws.String(co + ".json"),
-		}
+	var record []byte
 
-		// Fetch the object from S3
-		get, err := c.Service.GetObject(context.TODO(), getInput)
-		if err != nil {
-			return err
-		}
+	// Put contents of object into record
+	record, err = io.ReadAll(get.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read object: %s", err)
+	}
 
-		// Put contents of object into record
-		record, err = io.ReadAll(get.Body)
-		if err != nil {
-			return err
-		}
+	// Close the response body
+	get.Body.Close()
 
-		// Close the response body
-		get.Body.Close()
+	obj, err := json.Marshal(i)
+	if err != nil {
+		return fmt.Errorf("failed to marshal object: %s", err)
 	}
 
 	// Append newline to object
@@ -160,7 +136,7 @@ func (c *Client) Create(i interface{}) error {
 
 	// Put the object into S3
 	if _, err := c.Service.PutObject(context.TODO(), putInput); err != nil {
-		return err
+		return fmt.Errorf("failed to put object: %s", err)
 	}
 
 	return nil

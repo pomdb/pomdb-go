@@ -2,6 +2,7 @@ package pomdb
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -26,10 +27,10 @@ func (c *Client) Connect() error {
 	c.Service = s3.NewFromConfig(conf)
 
 	if err := c.CheckBucket(); err != nil {
-		return err
+		return fmt.Errorf("bucket %s does not exist", c.Bucket)
 	}
 
-	log.Printf("Connected to %s", c.Bucket)
+	log.Printf("connected to %s", c.Bucket)
 
 	return nil
 }
