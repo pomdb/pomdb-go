@@ -24,7 +24,7 @@ func main() {
 
 	user := User{
 		FullName: "John Doe",
-		Email:    "john.doe@qux.com",
+		Email:    "john.doe@zab.com",
 	}
 
 	if err := client.Create(&user); err != nil {

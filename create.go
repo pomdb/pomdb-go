@@ -5,9 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"reflect"
-	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -90,31 +88,10 @@ func (c *Client) Create(i interface{}) error {
 		sel.GetStream().Close()
 	}
 
-	// Create input for GetObject
-	getInput := &s3.GetObjectInput{
-		Bucket: &c.Bucket,
-		Key:    aws.String(co + ".json"),
-	}
-
-	// Fetch the object from S3
-	get, err := c.Service.GetObject(context.TODO(), getInput)
+	record, err := c.ConcurrentGetObject(context.TODO(), co+".json")
 	if err != nil {
-		var noSuchKey *types.NoSuchKey
-		if errors.As(err, &noSuchKey) {
-			return fmt.Errorf("failed to fetch object: %s", err)
-		}
+		return fmt.Errorf("failed to fetch object: %s", err)
 	}
-
-	var record []byte
-
-	// Put contents of object into record
-	record, err = io.ReadAll(get.Body)
-	if err != nil {
-		return fmt.Errorf("failed to read object: %s", err)
-	}
-
-	// Close the response body
-	get.Body.Close()
 
 	obj, err := json.Marshal(i)
 	if err != nil {
@@ -127,15 +104,8 @@ func (c *Client) Create(i interface{}) error {
 	// Append object to record
 	record = append(record, obj...)
 
-	// Create input for PutObject
-	putInput := &s3.PutObjectInput{
-		Bucket: &c.Bucket,
-		Key:    aws.String(co + ".json"),
-		Body:   strings.NewReader(string(record)),
-	}
-
-	// Put the object into S3
-	if _, err := c.Service.PutObject(context.TODO(), putInput); err != nil {
+	err = c.ConcurrentPutObject(context.TODO(), co+".json", record)
+	if err != nil {
 		return fmt.Errorf("failed to put object: %s", err)
 	}
 
