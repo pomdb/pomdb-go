@@ -1,6 +1,7 @@
 package pomdb
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -104,7 +105,24 @@ func (c *Client) Create(i interface{}) error {
 	// Append object to record
 	record = append(record, obj...)
 
-	err = c.ConcurrentPutObject(context.TODO(), co+".json", record)
+	// If > MinPutPartSize, use concurrent put
+	if len(record) > MinPutPartSize {
+		err = c.ConcurrentPutObject(context.TODO(), co+".json", record)
+		if err != nil {
+			return fmt.Errorf("failed to put object: %s", err)
+		}
+
+		return nil
+	}
+
+	// Otherwise, use regular put object
+	putInput := &s3.PutObjectInput{
+		Bucket: &c.Bucket,
+		Key:    aws.String(co + ".json"),
+		Body:   bytes.NewReader(record),
+	}
+
+	_, err = c.Service.PutObject(context.TODO(), putInput)
 	if err != nil {
 		return fmt.Errorf("failed to put object: %s", err)
 	}

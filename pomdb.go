@@ -17,8 +17,10 @@ import (
 
 // Define minimum and maximum part sizes
 const (
-	minPartSize = 500             // 500B
-	maxPartSize = 1 * 1024 * 1024 // 1MB
+	MinGetPartSize = 500               // 500B
+	MaxGetPartSize = 1 * 1024 * 1024   // 1MB
+	MinPutPartSize = 5 * 1024 * 1024   // 5MB
+	MaxPutPartSize = 100 * 1024 * 1024 // 100MB
 )
 
 type PartUploadResponse struct {
@@ -77,12 +79,12 @@ func (c *Client) ConcurrentGetObject(ctx context.Context, key string) ([]byte, e
 	size := headOutput.ContentLength
 
 	// Step 2: Calculate dynamic part size
-	dynamicPartSize := minPartSize * int64(math.Log2(float64(*size)/float64(minPartSize)+1))
-	if dynamicPartSize > maxPartSize {
-		dynamicPartSize = maxPartSize
+	dynamicPartSize := MinGetPartSize * int64(math.Log2(float64(*size)/float64(MinGetPartSize)+1))
+	if dynamicPartSize > MaxGetPartSize {
+		dynamicPartSize = MaxGetPartSize
 	}
-	if dynamicPartSize < minPartSize {
-		dynamicPartSize = minPartSize
+	if dynamicPartSize < MinGetPartSize {
+		dynamicPartSize = MinGetPartSize
 	}
 	numParts := (*size + dynamicPartSize - 1) / dynamicPartSize
 
@@ -134,12 +136,12 @@ func (c *Client) ConcurrentPutObject(ctx context.Context, key string, data []byt
 	size := int64(len(data)) // Size of the data
 
 	// Calculate dynamic part size
-	dynamicPartSize := minPartSize * int64(math.Log2(float64(size)/float64(minPartSize)+1))
-	if dynamicPartSize > maxPartSize {
-		dynamicPartSize = maxPartSize
+	dynamicPartSize := MinPutPartSize * int64(math.Log2(float64(size)/float64(MinPutPartSize)+1))
+	if dynamicPartSize > MaxPutPartSize {
+		dynamicPartSize = MaxPutPartSize
 	}
-	if dynamicPartSize < minPartSize {
-		dynamicPartSize = minPartSize
+	if dynamicPartSize < MinPutPartSize {
+		dynamicPartSize = MinPutPartSize
 	}
 	numParts := (size + dynamicPartSize - 1) / dynamicPartSize
 
