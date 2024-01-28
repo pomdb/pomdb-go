@@ -15,32 +15,28 @@ import (
 )
 
 func (c *Client) Create(i interface{}) error {
+	// Ensure 'i' is a pointer and points to a struct
 	rv := reflect.ValueOf(i)
-
 	if rv.Kind() != reflect.Ptr || rv.Elem().Kind() != reflect.Struct {
 		return fmt.Errorf("model must be a pointer to a struct")
 	}
 
-	if _, ok := rv.Elem().FieldByName("ID").Interface().(ObjectID); !ok {
-		return fmt.Errorf("model must have ID field of type ObjectID")
+	// Set model fields
+	if field := rv.FieldByName("ID"); field.IsValid() && field.CanSet() {
+		field.Set(reflect.ValueOf(NewObjectID()))
 	}
-
-	rv.Elem().FieldByName("ID").Set(reflect.ValueOf(NewObjectID()))
-
-	if field := rv.Elem().FieldByName("CreatedAt"); field.IsValid() {
-		field.SetInt(time.Now().Unix())
+	now := time.Now().Unix()
+	if field := rv.FieldByName("CreatedAt"); field.IsValid() && field.CanSet() {
+		field.SetInt(now)
 	}
-
-	if field := rv.Elem().FieldByName("UpdatedAt"); field.IsValid() {
-		field.SetInt(time.Now().Unix())
+	if field := rv.FieldByName("UpdatedAt"); field.IsValid() && field.CanSet() {
+		field.SetInt(now)
 	}
-
-	if field := rv.Elem().FieldByName("DeletedAt"); field.IsValid() {
+	if field := rv.FieldByName("DeletedAt"); field.IsValid() && field.CanSet() {
 		field.SetInt(0)
 	}
 
 	co := getCollectionName(i)
-
 	if uf, uv := getUniqueFieldMeta(rv); uf != "" {
 		// Create query for SelectObjectContent
 		query := fmt.Sprintf("SELECT * FROM S3Object s WHERE s.%s = '%s'", uf, uv)
