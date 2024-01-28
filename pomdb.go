@@ -3,10 +3,13 @@ package pomdb
 import (
 	"bytes"
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
 	"math"
+	"reflect"
 	"sync"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -218,4 +221,101 @@ func (c *Client) ConcurrentPutObject(ctx context.Context, key string, data []byt
 	}
 
 	return nil
+}
+
+// ExecuteS3SelectQuery performs a select query on an S3 object based on the provided query string.
+// It is designed to be used with any struct that is a pointer to a struct and potentially
+// contains an embedded Model struct. The query is executed against the specified S3 bucket
+// and object, which are determined based on the type of the input struct 'i'.
+//
+// The input 'i' must be a pointer to a struct, and the query should be a valid SQL
+// expression compatible with S3's SelectObjectContent API. The method constructs and
+// executes the S3 SelectObjectContent query, unmarshals the resulting JSON data into
+// new instances of the same type as 'i', and returns a slice of these instances.
+//
+// Returns a slice of interface{} containing unmarshaled results and an error if the
+// query execution or unmarshaling fails. Possible failure reasons include invalid query
+// syntax, issues with S3 connectivity, problems with the S3 object, or unmarshaling errors.
+//
+// Note: The method assumes that the resulting JSON structure from the query matches
+// the structure of 'i'. It creates new instances of 'i' for each record in the query result.
+//
+// Usage:
+//
+//	type MyStruct struct {
+//	    pomdb.Model  // Embedding Model struct is optional
+//	    // Other fields...
+//	}
+//
+//	query := "SELECT * FROM S3Object WHERE someField = 'someValue'"
+//	var obj MyStruct
+//	results, err := client.ExecuteS3SelectQuery(&obj, query)
+//	if err != nil {
+//	    // Handle error
+//	}
+//	for _, result := range results {
+//	    // Process each result, which is of type *MyStruct
+//	}
+func (c *Client) ExecuteS3SelectQuery(i interface{}, query string) ([]interface{}, error) {
+	// Ensure 'i' is a pointer and points to a struct
+	rv := reflect.ValueOf(i)
+	if rv.Kind() != reflect.Ptr || rv.Elem().Kind() != reflect.Struct {
+		return nil, fmt.Errorf("model must be a pointer to a struct")
+	}
+
+	// Create input for SelectObjectContent
+	selectInput := &s3.SelectObjectContentInput{
+		Bucket:         &c.Bucket,
+		Key:            aws.String(getCollectionName(i) + ".json"),
+		Expression:     aws.String(query),
+		ExpressionType: types.ExpressionTypeSql,
+		InputSerialization: &types.InputSerialization{
+			JSON: &types.JSONInput{
+				Type: types.JSONTypeDocument,
+			},
+		},
+		OutputSerialization: &types.OutputSerialization{
+			JSON: &types.JSONOutput{
+				RecordDelimiter: aws.String("\n"),
+			},
+		},
+	}
+
+	// Execute the query
+	sel, err := c.Service.SelectObjectContent(context.Background(), selectInput)
+	if err != nil {
+		var noSuchKey *types.NoSuchKey
+		if errors.As(err, &noSuchKey) {
+			return nil, fmt.Errorf("collection %s does not exist", getCollectionName(i))
+		}
+	}
+
+	// Read the results
+	var results []interface{}
+	for event := range sel.GetStream().Events() {
+		var record []byte
+		switch event := event.(type) {
+		case *types.SelectObjectContentEventStreamMemberRecords:
+			record = event.Value.Payload
+		}
+
+		if record != nil {
+			// Create new instance of 'i'
+			ni := reflect.New(reflect.TypeOf(i).Elem()).Interface()
+
+			// Unmarshal record into 'ni'
+			err = json.Unmarshal(record, ni)
+			if err != nil {
+				return nil, fmt.Errorf("failed to unmarshal record: %s", err)
+			}
+
+			// Append 'ni' to results
+			results = append(results, ni)
+		}
+	}
+
+	// Close the response body
+	sel.GetStream().Close()
+
+	return results, nil
 }

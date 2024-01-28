@@ -4,16 +4,45 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"reflect"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 )
 
+// Create stores a new object in the S3 bucket. It accepts an input 'i', which
+// should be a pointer to a struct. If the struct embeds the Model struct, Create
+// initializes the Model's ID field with a new ObjectID, and sets the CreatedAt and
+// UpdatedAt fields to the current Unix timestamp. The DeletedAt field is set to zero.
+//
+// The method performs a uniqueness check if the struct contains a unique field, and
+// serializes the struct to JSON before appending it to the corresponding collection
+// file in S3. The method decides between a concurrent or regular put operation based
+// on the object size.
+//
+// Create uses reflection to handle the Model struct fields and will return an error
+// if 'i' is not a pointer to a struct or if other reflection-based operations fail.
+//
+// Returns an error if any step in the process fails, including S3 operations, type checks,
+// and JSON serialization.
+//
+// Note: Embedding the Model struct is optional. If not embedded, the method will skip
+// setting the Model fields and focus on the S3 storage operations.
+//
+// Usage:
+//
+//	type MyStruct struct {
+//	    pomdb.Model  // Optional embedding of Model struct
+//	    // Other fields...
+//	}
+//
+//	obj := MyStruct{ /* initialize fields */ }
+//	err := client.Create(&obj)
+//	if err != nil {
+//	    // Handle error
+//	}
 func (c *Client) Create(i interface{}) error {
 	// Ensure 'i' is a pointer and points to a struct
 	rv := reflect.ValueOf(i)
@@ -41,48 +70,16 @@ func (c *Client) Create(i interface{}) error {
 		// Create query for SelectObjectContent
 		query := fmt.Sprintf("SELECT * FROM S3Object s WHERE s.%s = '%s'", uf, uv)
 
-		// Create input for SelectObjectContent
-		selectInput := &s3.SelectObjectContentInput{
-			Bucket:         &c.Bucket,
-			Key:            aws.String(co + ".json"),
-			Expression:     aws.String(query),
-			ExpressionType: types.ExpressionTypeSql,
-			InputSerialization: &types.InputSerialization{
-				JSON: &types.JSONInput{
-					Type: types.JSONTypeDocument,
-				},
-			},
-			OutputSerialization: &types.OutputSerialization{
-				JSON: &types.JSONOutput{
-					RecordDelimiter: aws.String("\n"),
-				},
-			},
-		}
-
-		// Execute the query
-		sel, err := c.Service.SelectObjectContent(context.TODO(), selectInput)
+		// Execute query
+		results, err := c.ExecuteS3SelectQuery(i, query)
 		if err != nil {
-			var noSuchKey *types.NoSuchKey
-			if errors.As(err, &noSuchKey) {
-				return fmt.Errorf("collection %s does not exist", co)
-			}
+			return err
 		}
 
-		// Read the results
-		for event := range sel.GetStream().Events() {
-			var record []byte
-			switch event := event.(type) {
-			case *types.SelectObjectContentEventStreamMemberRecords:
-				record = event.Value.Payload
-			}
-
-			if record != nil {
-				return fmt.Errorf("unique field %s already exists: %s", uf, record)
-			}
+		// If results are returned, return error
+		if len(results) > 0 {
+			return fmt.Errorf("unique field %s already exists", uf)
 		}
-
-		// Close the response body
-		sel.GetStream().Close()
 	}
 
 	record, err := c.ConcurrentGetObject(context.TODO(), co+".json")
