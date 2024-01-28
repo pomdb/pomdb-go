@@ -69,6 +69,23 @@ func (c *Client) CheckBucket() error {
 	return nil
 }
 
+// ConcurrentGetObject retrieves an object from an S3 bucket in parallelized parts based on the provided key.
+// It calculates the object's size and fetches it using concurrent byte-range requests, dynamically adjusting the
+// part sizes within minimum and maximum constraints. The method uses 'ctx' for managing the request lifecycle
+// and 'key' to identify the object in the S3 bucket. After completing all operations, it combines these parts
+// in the correct order to reconstruct the full object.
+//
+// The function returns a byte slice containing the object's data. If any errors occur during the retrieval process,
+// such as issues in determining the object size, during part retrieval, or in combining the parts, an error is returned.
+//
+// Usage:
+//
+//	data, err := client.ConcurrentGetObject(context.Background(), "object-key")
+//	if err != nil {
+//	    log.Printf("Error retrieving object: %s", err)
+//	} else {
+//	    log.Printf("Object retrieved successfully, size: %d bytes", len(data))
+//	}
 func (c *Client) ConcurrentGetObject(ctx context.Context, key string) ([]byte, error) {
 	// Step 1: Determine object size
 	headInput := &s3.HeadObjectInput{
@@ -135,6 +152,26 @@ func (c *Client) ConcurrentGetObject(ctx context.Context, key string) ([]byte, e
 	return combined, nil
 }
 
+// ConcurrentPutObject uploads an object to an S3 bucket in parallelized parts. This method takes
+// the provided 'data' byte slice and uploads it under the specified 'key'. The upload process is
+// optimized for handling large objects by breaking the data into parts and uploading them concurrently.
+// The method uses 'ctx' as the context for the request lifecycle and 'key' as the identifier for the
+// object in the S3 bucket. It calculates the size of 'data', determines the dynamic part size for the
+// upload, and initiates a multipart upload process. Each part of the data is uploaded in parallel,
+// and upon completion of all uploads, the parts are assembled to complete the object upload.
+//
+// The method returns an error if any issues occur during the upload process. This includes errors
+// in initiating the multipart upload, uploading individual parts, or in the final assembly of the parts.
+//
+// Usage:
+//
+//	data := []byte("your data here")
+//	err := client.ConcurrentPutObject(context.Background(), "object-key", data)
+//	if err != nil {
+//	    log.Printf("Error uploading object: %s", err)
+//	} else {
+//	    log.Printf("Object uploaded successfully")
+//	}
 func (c *Client) ConcurrentPutObject(ctx context.Context, key string, data []byte) error {
 	size := int64(len(data)) // Size of the data
 
