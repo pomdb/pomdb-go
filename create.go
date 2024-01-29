@@ -51,17 +51,17 @@ func (c *Client) Create(i interface{}) error {
 	}
 
 	// Set model fields
-	if field := rv.FieldByName("ID"); field.IsValid() && field.CanSet() {
+	if field := rv.Elem().FieldByName("ID"); field.IsValid() && field.CanSet() {
 		field.Set(reflect.ValueOf(NewObjectID()))
 	}
 	now := time.Now().Unix()
-	if field := rv.FieldByName("CreatedAt"); field.IsValid() && field.CanSet() {
+	if field := rv.Elem().FieldByName("CreatedAt"); field.IsValid() && field.CanSet() {
 		field.SetInt(now)
 	}
-	if field := rv.FieldByName("UpdatedAt"); field.IsValid() && field.CanSet() {
+	if field := rv.Elem().FieldByName("UpdatedAt"); field.IsValid() && field.CanSet() {
 		field.SetInt(now)
 	}
-	if field := rv.FieldByName("DeletedAt"); field.IsValid() && field.CanSet() {
+	if field := rv.Elem().FieldByName("DeletedAt"); field.IsValid() && field.CanSet() {
 		field.SetInt(0)
 	}
 
