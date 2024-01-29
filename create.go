@@ -82,7 +82,7 @@ func (c *Client) Create(i interface{}) error {
 		}
 	}
 
-	record, err := c.ConcurrentGetObject(context.TODO(), co+".json")
+	rec, err := c.ConcurrentGetObject(context.TODO(), co+".json")
 	if err != nil {
 		return fmt.Errorf("failed to fetch object: %s", err)
 	}
@@ -96,11 +96,11 @@ func (c *Client) Create(i interface{}) error {
 	obj = append(obj, []byte("\n")...)
 
 	// Append object to record
-	record = append(record, obj...)
+	rec = append(rec, obj...)
 
 	// If > MinPutPartSize, use concurrent put
-	if len(record) > MinPutPartSize {
-		err = c.ConcurrentPutObject(context.TODO(), co+".json", record)
+	if len(rec) > MinPutPartSize {
+		err = c.ConcurrentPutObject(context.TODO(), co+".json", rec)
 		if err != nil {
 			return fmt.Errorf("failed to put object: %s", err)
 		}
@@ -109,13 +109,13 @@ func (c *Client) Create(i interface{}) error {
 	}
 
 	// Otherwise, use regular put object
-	putInput := &s3.PutObjectInput{
+	put := &s3.PutObjectInput{
 		Bucket: &c.Bucket,
 		Key:    aws.String(co + ".json"),
-		Body:   bytes.NewReader(record),
+		Body:   bytes.NewReader(rec),
 	}
 
-	_, err = c.Service.PutObject(context.TODO(), putInput)
+	_, err = c.Service.PutObject(context.TODO(), put)
 	if err != nil {
 		return fmt.Errorf("failed to put object: %s", err)
 	}
