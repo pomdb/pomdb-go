@@ -42,7 +42,7 @@ import (
 type User struct {
 	pomdb.Model
 	FullName string `json:"full_name" validate:"required"`
-	Email    string `json:"email" validate:"required,email"`
+	Email    string `json:"email" validate:"required,email" pomdb:"index"`
 }
 
 var client = pomdb.Client{

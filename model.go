@@ -1,8 +1,12 @@
 package pomdb
 
+import "time"
+
+type Timestamp time.Time
+
 type Model struct {
-	ID        ObjectID `json:"id"`
-	CreatedAt int64    `json:"created_at"`
-	UpdatedAt int64    `json:"updated_at"`
-	DeletedAt int64    `json:"deleted_at"`
+	ID        ObjectID  `json:"id"`
+	CreatedAt Timestamp `json:"created_at"`
+	UpdatedAt Timestamp `json:"updated_at"`
+	DeletedAt Timestamp `json:"deleted_at"`
 }

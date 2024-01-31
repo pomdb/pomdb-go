@@ -30,23 +30,79 @@ func getCollectionName(i interface{}) string {
 	return name
 }
 
-// getUniqueFieldMeta returns the unique field and value for the given model.
-func getUniqueFieldMeta(rv reflect.Value) (string, string) {
-	var uniqueField string
-	var uniqueValue string
+type IndexFieldValue struct {
+	Field string
+	Value string
+}
+
+// getIndexFieldValues returns the index fields and values for the given model.
+func getIndexFieldValues(rv reflect.Value) []IndexFieldValue {
+	var indexFields []IndexFieldValue
 
 	for j := 0; j < rv.Elem().NumField(); j++ {
 		field := rv.Elem().Type().Field(j)
 		value := rv.Elem().Field(j).String()
-		if strings.Contains(field.Tag.Get("pomdb"), "unique") {
+		if strings.Contains(field.Tag.Get("pomdb"), "index") {
 			tagname := field.Tag.Get("json")
 
 			log.Printf("model has unique field: %s", tagname)
 
-			uniqueField = tagname
-			uniqueValue = value
+			indexFields = append(indexFields, IndexFieldValue{
+				Field: tagname,
+				Value: value,
+			})
 		}
 	}
 
-	return uniqueField, uniqueValue
+	return indexFields
+}
+
+type ErrInvalidModelField struct {
+	Message string
+}
+
+func (e *ErrInvalidModelField) Error() string {
+	return e.Message
+}
+
+// validateModelFields validates the fields of the given model.
+func validateModelFields(i interface{}) *ErrInvalidModelField {
+	// Get the type of i, dereferencing if it's a pointer
+	rt := reflect.TypeOf(i)
+	if rt.Kind() == reflect.Ptr {
+		rt = rt.Elem()
+	}
+
+	for j := 0; j < rt.NumField(); j++ {
+		field := rt.Field(j)
+
+		switch field.Name {
+		case "ID":
+			if field.Type.String() != "pomdb.ObjectID" {
+				return &ErrInvalidModelField{
+					Message: "Record ID field must be a PomDB ObjectID",
+				}
+			}
+		case "CreatedAt":
+			if field.Type.String() != "pomdb.Timestamp" {
+				return &ErrInvalidModelField{
+					Message: "CreatedAt field must be a PomDB Timestamp",
+				}
+			}
+		case "UpdatedAt":
+			if field.Type.String() != "pomdb.Timestamp" {
+				return &ErrInvalidModelField{
+					Message: "UpdatedAt field must be a PomDB Timestamp",
+				}
+			}
+		case "DeletedAt":
+			if field.Type.String() != "pomdb.Timestamp" {
+				return &ErrInvalidModelField{
+					Message: "DeletedAt field must be a PomDB Timestamp",
+				}
+			}
+		}
+	}
+
+	return nil
 }
