@@ -65,42 +65,42 @@ func (e *ErrInvalidModelField) Error() string {
 	return e.Message
 }
 
-// validateModelFields validates the fields of the given model.
-func validateModelFields(i interface{}) *ErrInvalidModelField {
-	// Get the type of i, dereferencing if it's a pointer
+// initializeModelFields validates the fields of the given model.
+func initializeModelFields(i interface{}) *ErrInvalidModelField {
 	rt := reflect.TypeOf(i)
 	if rt.Kind() == reflect.Ptr {
 		rt = rt.Elem()
 	}
 
+	rv := reflect.ValueOf(i)
+	if rv.Kind() == reflect.Ptr {
+		rv = rv.Elem()
+	}
+
 	for j := 0; j < rt.NumField(); j++ {
 		field := rt.Field(j)
 
+		// Check if the field is an embedded struct
+		if field.Anonymous && field.Type.Kind() == reflect.Struct {
+			// Recursively handle fields of the embedded struct
+			err := initializeModelFields(rv.Field(j).Addr().Interface())
+			if err != nil {
+				return err
+			}
+			continue
+		}
+
 		switch field.Name {
 		case "ID":
-			if field.Type.String() != "pomdb.ObjectID" {
-				return &ErrInvalidModelField{
-					Message: "Record ID field must be a PomDB ObjectID",
-				}
+			if field.Type.String() != "pomdb.ObjectID" && field.Type.String() != "ObjectID" {
+				return &ErrInvalidModelField{Message: "Record ID field must be a PomDB ObjectID"}
 			}
-		case "CreatedAt":
-			if field.Type.String() != "pomdb.Timestamp" {
-				return &ErrInvalidModelField{
-					Message: "CreatedAt field must be a PomDB Timestamp",
-				}
+			rv.Field(j).Set(reflect.ValueOf(NewObjectID()))
+		case "CreatedAt", "UpdatedAt", "DeletedAt":
+			if field.Type.String() != "pomdb.Timestamp" && field.Type.String() != "Timestamp" {
+				return &ErrInvalidModelField{Message: field.Name + " field must be a PomDB Timestamp"}
 			}
-		case "UpdatedAt":
-			if field.Type.String() != "pomdb.Timestamp" {
-				return &ErrInvalidModelField{
-					Message: "UpdatedAt field must be a PomDB Timestamp",
-				}
-			}
-		case "DeletedAt":
-			if field.Type.String() != "pomdb.Timestamp" {
-				return &ErrInvalidModelField{
-					Message: "DeletedAt field must be a PomDB Timestamp",
-				}
-			}
+			rv.Field(j).Set(reflect.ValueOf(NewTimestamp()))
 		}
 	}
 

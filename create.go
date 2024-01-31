@@ -13,7 +13,7 @@ func (c *Client) Create(i interface{}) error {
 	}
 
 	// Ensure types of pomdb model fields are correct
-	if err := validateModelFields(i); err != nil {
+	if err := initializeModelFields(i); err != nil {
 		return err
 	}
 

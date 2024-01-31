@@ -9,7 +9,7 @@ import (
 type User struct {
 	pomdb.Model
 	FullName string `json:"full_name" validate:"required"`
-	Email    string `json:"email" validate:"required,email" pomdb:"unique"`
+	Email    string `json:"email" validate:"required,email" pomdb:"index"`
 }
 
 var client = pomdb.Client{
@@ -31,5 +31,5 @@ func main() {
 		log.Fatal(err)
 	}
 
-	log.Printf("Created user %s at %d", user.ID.String(), user.CreatedAt)
+	log.Printf("Created user %s at %s", user.ID.String(), user.CreatedAt.String())
 }
