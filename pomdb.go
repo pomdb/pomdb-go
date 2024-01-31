@@ -1,6 +1,7 @@
 package pomdb
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"errors"
@@ -94,6 +95,7 @@ func (c *Client) CreateIndexItem(collection string, indexFields []IndexFieldValu
 		put := &s3.PutObjectInput{
 			Bucket: &c.Bucket,
 			Key:    &key,
+			Body:   bytes.NewReader([]byte(indexField.ID)),
 		}
 
 		if _, err := c.Service.PutObject(context.TODO(), put); err != nil {

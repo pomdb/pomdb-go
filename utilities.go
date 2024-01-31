@@ -43,6 +43,7 @@ func getIdFieldValue(rv reflect.Value) string {
 }
 
 type IndexFieldValue struct {
+	ID    string
 	Field string
 	Value string
 }
@@ -60,6 +61,7 @@ func getIndexFieldValues(rv reflect.Value) []IndexFieldValue {
 			log.Printf("model has unique field: %s", tagname)
 
 			indexFields = append(indexFields, IndexFieldValue{
+				ID:    getIdFieldValue(rv),
 				Field: tagname,
 				Value: value,
 			})
