@@ -30,6 +30,18 @@ func getCollectionName(i interface{}) string {
 	return name
 }
 
+// getIdFieldValue returns the value of the ID field for the given model.
+func getIdFieldValue(rv reflect.Value) string {
+	// Get the value of the ID field
+	id := rv.Elem().FieldByName("ID").Interface().(ObjectID)
+
+	// Log the ID value
+	log.Printf("GetIdFieldValue: %s", id)
+
+	// Return the ID value
+	return id.String()
+}
+
 type IndexFieldValue struct {
 	Field string
 	Value string

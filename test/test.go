@@ -24,12 +24,13 @@ func main() {
 
 	user := User{
 		FullName: "John Doe",
-		Email:    "john.doe@zab.com",
+		Email:    "john.doe@zip.com",
 	}
 
-	if err := client.Create(&user); err != nil {
+	res, err := client.Create(&user)
+	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.Printf("Created user %s at %s", user.ID.String(), user.CreatedAt.String())
+	log.Printf("Created user with ETag: %s", *res)
 }

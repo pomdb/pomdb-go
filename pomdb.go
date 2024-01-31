@@ -59,7 +59,7 @@ func (c *Client) CheckIndexExists(collection string, indexFields []IndexFieldVal
 		code := base64.StdEncoding.EncodeToString([]byte(indexField.Value))
 
 		// Create the key path for the index item
-		key := collection + "/" + indexField.Field + "/" + code
+		key := collection + "/indexes/" + indexField.Field + "/" + code
 
 		head := &s3.HeadObjectInput{
 			Bucket: &c.Bucket,
@@ -89,7 +89,7 @@ func (c *Client) CreateIndexItem(collection string, indexFields []IndexFieldValu
 		code := base64.StdEncoding.EncodeToString([]byte(indexField.Value))
 
 		// Create the key path for the index item
-		key := collection + "/" + indexField.Field + "/" + code
+		key := collection + "/indexes/" + indexField.Field + "/" + code
 
 		put := &s3.PutObjectInput{
 			Bucket: &c.Bucket,

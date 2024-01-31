@@ -10,7 +10,7 @@
     <a href="https://github.com/pomdb/pomdb-go/releases/latest"><img src="https://img.shields.io/github/release/pomdb/pomdb-go.svg?style=flat-square"></a>
   </p>
   <p>
-    <strong>PomDB</strong> is an innovative approach to database management, leveraging the robust storage capabilities of <a href="https://aws.amazon.com/s3">S3</a> to store and retrieve data. PomDB is entirely client-driven and enforces an opinionated structure for consistency and compatibility. Designed to take the <strong>pain</strong> out of scaling your data, with <strong>simplicity</strong> and <strong>performance</strong> in mind.
+    <strong>PomDB</strong> is an innovative approach to database management, leveraging the robust storage capabilities of <a href="https://aws.amazon.com/s3">S3</a> to store and retrieve data. PomDB is entirely client-driven and enforces an opinionated structure for consistency, compatibility, and speed :fire:
   </p>
 </div>
 
@@ -60,7 +60,7 @@ func main() {
 		Email:    "john.doe@foo.com",
 	}
 
-	if err := client.Create(&user); err != nil {
+	if res, err := client.Create(&user); err != nil {
 		log.Fatal(err)
 	}
 
