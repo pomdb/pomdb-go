@@ -11,6 +11,10 @@ func NewTimestamp() Timestamp {
 	return Timestamp(time.Now())
 }
 
+func NilTimestamp() Timestamp {
+	return Timestamp(time.Time{})
+}
+
 // MarshalJSON customizes the JSON representation of Timestamp.
 func (ts Timestamp) MarshalJSON() ([]byte, error) {
 	return json.Marshal(time.Time(ts).Unix())
@@ -35,6 +39,11 @@ func (t Timestamp) String() string {
 	}
 
 	return string(mtv)
+}
+
+// IsNil returns true if the Timestamp is the zero value.
+func (t Timestamp) IsNil() bool {
+	return time.Time(t).IsZero()
 }
 
 type Model struct {
