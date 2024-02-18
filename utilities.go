@@ -71,57 +71,50 @@ func getIndexFieldValues(rv reflect.Value) []IndexFieldValue {
 	return indexFields
 }
 
-type ErrInvalidModelField struct {
-	Message string
-}
-
-func (e *ErrInvalidModelField) Error() string {
-	return e.Message
-}
-
-// setNewModelFields validates the fields of the given model.
-func setNewModelFields(i interface{}) *ErrInvalidModelField {
-	rt := reflect.TypeOf(i)
-	if rt.Kind() == reflect.Ptr {
-		rt = rt.Elem()
-	}
-
+// setModelFields validates the fields of the given model.
+func setModelObjectId(i interface{}) {
 	rv := reflect.ValueOf(i)
 	if rv.Kind() == reflect.Ptr {
 		rv = rv.Elem()
 	}
 
-	for j := 0; j < rt.NumField(); j++ {
-		field := rt.Field(j)
-		value := rv.Field(j)
+	// Set the ID field
+	rv.FieldByName("ID").Set(reflect.ValueOf(reflect.ValueOf(NewObjectID())))
+}
 
-		// Check if the field is an embedded struct
-		if field.Anonymous && field.Type.Kind() == reflect.Struct {
-			// Recursively handle fields of the embedded struct
-			err := setNewModelFields(value.Addr().Interface())
-			if err != nil {
-				return err
-			}
-			continue
-		}
-
-		switch field.Name {
-		case "ID":
-			if field.Type.String() != "pomdb.ObjectID" && field.Type.String() != "ObjectID" {
-				return &ErrInvalidModelField{Message: "Record ID field must be a PomDB ObjectID"}
-			}
-			value.Set(reflect.ValueOf(NewObjectID()))
-		case "CreatedAt", "UpdatedAt", "DeletedAt":
-			if field.Type.String() != "pomdb.Timestamp" && field.Type.String() != "Timestamp" {
-				return &ErrInvalidModelField{Message: field.Name + " field must be a PomDB Timestamp"}
-			}
-			if field.Name == "DeletedAt" {
-				value.Set(reflect.ValueOf(NilTimestamp()))
-			} else {
-				value.Set(reflect.ValueOf(NewTimestamp()))
-			}
-		}
+// setModelTimestamps sets the CreatedAt and UpdatedAt fields of the given model.
+func setModelTimestamps(i interface{}) {
+	rv := reflect.ValueOf(i)
+	if rv.Kind() == reflect.Ptr {
+		rv = rv.Elem()
 	}
+
+	// Set the CreatedAt and UpdatedAt fields
+	rv.FieldByName("CreatedAt").Set(reflect.ValueOf(NewTimestamp()))
+	rv.FieldByName("UpdatedAt").Set(reflect.ValueOf(NewTimestamp()))
+}
+
+// setModelDeletedAt sets the DeletedAt field of the given model.
+func setModelDeletedAt(i interface{}) {
+	rv := reflect.ValueOf(i)
+	if rv.Kind() == reflect.Ptr {
+		rv = rv.Elem()
+	}
+
+	// Set the DeletedAt field
+	rv.FieldByName("DeletedAt").Set(reflect.ValueOf(NilTimestamp()))
+}
+
+// setNewModelFields validates the fields of the given model.
+func setNewModelFields(i interface{}) error {
+	// Set the ID field
+	setModelObjectId(i)
+
+	// Set the CreatedAt and UpdatedAt fields
+	setModelTimestamps(i)
+
+	// Set the DeletedAt field
+	setModelDeletedAt(i)
 
 	return nil
 }
