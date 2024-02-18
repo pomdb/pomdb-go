@@ -79,8 +79,8 @@ func (e *ErrInvalidModelField) Error() string {
 	return e.Message
 }
 
-// initializeModelFields validates the fields of the given model.
-func initializeModelFields(i interface{}) *ErrInvalidModelField {
+// setNewModelFields validates the fields of the given model.
+func setNewModelFields(i interface{}) *ErrInvalidModelField {
 	rt := reflect.TypeOf(i)
 	if rt.Kind() == reflect.Ptr {
 		rt = rt.Elem()
@@ -97,7 +97,7 @@ func initializeModelFields(i interface{}) *ErrInvalidModelField {
 		// Check if the field is an embedded struct
 		if field.Anonymous && field.Type.Kind() == reflect.Struct {
 			// Recursively handle fields of the embedded struct
-			err := initializeModelFields(rv.Field(j).Addr().Interface())
+			err := setNewModelFields(rv.Field(j).Addr().Interface())
 			if err != nil {
 				return err
 			}
