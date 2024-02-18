@@ -114,7 +114,11 @@ func initializeModelFields(i interface{}) *ErrInvalidModelField {
 			if field.Type.String() != "pomdb.Timestamp" && field.Type.String() != "Timestamp" {
 				return &ErrInvalidModelField{Message: field.Name + " field must be a PomDB Timestamp"}
 			}
-			rv.Field(j).Set(reflect.ValueOf(NewTimestamp()))
+			if field.Name == "DeletedAt" {
+				rv.Field(j).Set(reflect.ValueOf(NilTimestamp()))
+			} else {
+				rv.Field(j).Set(reflect.ValueOf(NewTimestamp()))
+			}
 		}
 	}
 
