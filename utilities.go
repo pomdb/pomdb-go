@@ -79,7 +79,14 @@ func setModelObjectId(i interface{}) {
 	}
 
 	// Set the ID field
-	rv.FieldByName("ID").Set(reflect.ValueOf(reflect.ValueOf(NewObjectID())))
+	for j := 0; j < rv.Elem().NumField(); j++ {
+		field := rv.Elem().Type().Field(j)
+		if strings.Contains(field.Tag.Get("pomdb"), "id") {
+			// Set the ID field
+			rv.Elem().FieldByName("ID").Set(reflect.ValueOf(NewObjectID()))
+			return
+		}
+	}
 }
 
 // setModelTimestamps sets the CreatedAt and UpdatedAt fields of the given model.
@@ -90,8 +97,17 @@ func setModelTimestamps(i interface{}) {
 	}
 
 	// Set the CreatedAt and UpdatedAt fields
-	rv.FieldByName("CreatedAt").Set(reflect.ValueOf(NewTimestamp()))
-	rv.FieldByName("UpdatedAt").Set(reflect.ValueOf(NewTimestamp()))
+	for j := 0; j < rv.Elem().NumField(); j++ {
+		field := rv.Elem().Type().Field(j)
+		if strings.Contains(field.Tag.Get("pomdb"), "created_at") {
+			// Set the CreatedAt field
+			rv.Elem().FieldByName("CreatedAt").Set(reflect.ValueOf(NewTimestamp()))
+		}
+		if strings.Contains(field.Tag.Get("pomdb"), "updated_at") {
+			// Set the UpdatedAt field
+			rv.Elem().FieldByName("UpdatedAt").Set(reflect.ValueOf(NewTimestamp()))
+		}
+	}
 }
 
 // setModelDeletedAt sets the DeletedAt field of the given model.
@@ -102,7 +118,13 @@ func setModelDeletedAt(i interface{}) {
 	}
 
 	// Set the DeletedAt field
-	rv.FieldByName("DeletedAt").Set(reflect.ValueOf(NilTimestamp()))
+	for j := 0; j < rv.Elem().NumField(); j++ {
+		field := rv.Elem().Type().Field(j)
+		if strings.Contains(field.Tag.Get("pomdb"), "deleted_at") {
+			// Set the DeletedAt field
+			rv.Elem().FieldByName("DeletedAt").Set(reflect.ValueOf(NilTimestamp()))
+		}
+	}
 }
 
 // setNewModelFields validates the fields of the given model.
