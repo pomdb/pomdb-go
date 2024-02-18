@@ -93,11 +93,12 @@ func setNewModelFields(i interface{}) *ErrInvalidModelField {
 
 	for j := 0; j < rt.NumField(); j++ {
 		field := rt.Field(j)
+		value := rv.Field(j)
 
 		// Check if the field is an embedded struct
 		if field.Anonymous && field.Type.Kind() == reflect.Struct {
 			// Recursively handle fields of the embedded struct
-			err := setNewModelFields(rv.Field(j).Addr().Interface())
+			err := setNewModelFields(value.Addr().Interface())
 			if err != nil {
 				return err
 			}
@@ -109,15 +110,15 @@ func setNewModelFields(i interface{}) *ErrInvalidModelField {
 			if field.Type.String() != "pomdb.ObjectID" && field.Type.String() != "ObjectID" {
 				return &ErrInvalidModelField{Message: "Record ID field must be a PomDB ObjectID"}
 			}
-			rv.Field(j).Set(reflect.ValueOf(NewObjectID()))
+			value.Set(reflect.ValueOf(NewObjectID()))
 		case "CreatedAt", "UpdatedAt", "DeletedAt":
 			if field.Type.String() != "pomdb.Timestamp" && field.Type.String() != "Timestamp" {
 				return &ErrInvalidModelField{Message: field.Name + " field must be a PomDB Timestamp"}
 			}
 			if field.Name == "DeletedAt" {
-				rv.Field(j).Set(reflect.ValueOf(NilTimestamp()))
+				value.Set(reflect.ValueOf(NilTimestamp()))
 			} else {
-				rv.Field(j).Set(reflect.ValueOf(NewTimestamp()))
+				value.Set(reflect.ValueOf(NewTimestamp()))
 			}
 		}
 	}
