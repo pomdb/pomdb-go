@@ -4,27 +4,27 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
-	"reflect"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
 func (c *Client) Create(i interface{}) (*string, error) {
-	// Ensure 'i' is a pointer and points to a struct
-	rv := reflect.ValueOf(i)
-	if rv.Kind() != reflect.Ptr || rv.Elem().Kind() != reflect.Struct {
-		return nil, fmt.Errorf("pomdb: expected pointer to struct, got %T", i)
-	}
-
-	// Ensure types of pomdb model fields are correct
-	if err := setNewModelFields(i); err != nil {
+	// Dereference the input
+	rv, err := dereferenceStruct(i)
+	if err != nil {
 		return nil, err
 	}
 
-	co := getCollectionName(i)
+	// Build the struct cache
+	ca := buildStructCache(rv)
 
-	if ifv := getIndexFieldValues(rv); len(ifv) > 0 {
+	// Set the new model fields
+	id := ca.SetNewModelFields()
+
+	// Get the collection
+	co := ca.Collection
+
+	if ifv := getIndexFieldValues(rv, id); len(ifv) > 0 {
 		if err := c.CheckIndexExists(co, ifv); err != nil {
 			return nil, err
 		}
@@ -40,8 +40,8 @@ func (c *Client) Create(i interface{}) (*string, error) {
 		return nil, err
 	}
 
-	// Get the record's ID
-	key := co + "/" + getIdFieldValue(rv)
+	// Set the record's key
+	key := co + "/" + id
 
 	put := &s3.PutObjectInput{
 		Bucket: &c.Bucket,

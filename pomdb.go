@@ -52,7 +52,7 @@ func (c *Client) CheckBucket() error {
 }
 
 // CheckIndexExists checks if an index item exists in the given collection.
-func (c *Client) CheckIndexExists(collection string, indexFields []IndexFieldValue) error {
+func (c *Client) CheckIndexExists(collection string, indexFields []IndexField) error {
 	for _, indexField := range indexFields {
 		log.Printf("CheckIndexExists: collection=%s, indexField=%v", collection, indexField)
 
@@ -82,7 +82,7 @@ func (c *Client) CheckIndexExists(collection string, indexFields []IndexFieldVal
 }
 
 // CreateIndexItem creates an index item in the given collection.
-func (c *Client) CreateIndexItem(collection string, indexFields []IndexFieldValue) error {
+func (c *Client) CreateIndexItem(collection string, indexFields []IndexField) error {
 	for _, indexField := range indexFields {
 		log.Printf("CreateIndexItem: collection=%s, indexField=%v", collection, indexField)
 

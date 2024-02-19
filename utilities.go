@@ -1,67 +1,75 @@
 package pomdb
 
 import (
+	"errors"
+	"fmt"
 	"log"
 	"reflect"
 	"strings"
+	"unicode"
 
 	"github.com/gertd/go-pluralize"
 	"github.com/iancoleman/strcase"
 )
 
-var pluralizer = pluralize.NewClient()
-
-// getCollectionName returns the name of the collection for the given model,
-// which is the plural form of the model's name in snake case.
-func getCollectionName(i interface{}) string {
-	// Get the type of i, dereferencing if it's a pointer
-	rt := reflect.TypeOf(i)
-	if rt.Kind() == reflect.Ptr {
-		rt = rt.Elem()
-	}
-
-	// Convert the name to snake case and pluralize it
-	name := pluralizer.Plural(strcase.ToSnake(rt.Name()))
-
-	// Log the original and final names
-	log.Printf("GetCollectionName: %s -> %s", rt.Name(), name)
-
-	// Return the pluralized, snake_case name
-	return name
-}
-
-// getIdFieldValue returns the value of the ID field for the given model.
-func getIdFieldValue(rv reflect.Value) string {
-	// Get the value of the ID field
-	id := rv.Elem().FieldByName("ID").Interface().(ObjectID)
-
-	// Log the ID value
-	log.Printf("GetIdFieldValue: %s", id)
-
-	// Return the ID value
-	return id.String()
-}
-
-type IndexFieldValue struct {
+type IndexField struct {
 	ID    string
 	Field string
 	Value string
 }
 
-// getIndexFieldValues returns the index fields and values for the given model.
-func getIndexFieldValues(rv reflect.Value) []IndexFieldValue {
-	var indexFields []IndexFieldValue
+type StructCache struct {
+	Collection     string
+	IDField        *reflect.Value
+	CreatedAtField *reflect.Value
+	UpdatedAtField *reflect.Value
+	DeletedAtField *reflect.Value
+}
 
-	for j := 0; j < rv.Elem().NumField(); j++ {
-		field := rv.Elem().Type().Field(j)
-		value := rv.Elem().Field(j).String()
+func (sc *StructCache) SetNewModelFields() string {
+	id := NewObjectID()
+	sc.IDField.Set(reflect.ValueOf(id))
+
+	ts := NewTimestamp()
+	if sc.CreatedAtField != nil && sc.CreatedAtField.CanSet() {
+		sc.CreatedAtField.Set(reflect.ValueOf(ts))
+	}
+	if sc.UpdatedAtField != nil && sc.UpdatedAtField.CanSet() {
+		sc.UpdatedAtField.Set(reflect.ValueOf(ts))
+	}
+	if sc.DeletedAtField != nil && sc.DeletedAtField.CanSet() {
+		sc.DeletedAtField.Set(reflect.ValueOf(NilTimestamp()))
+	}
+
+	return id.String()
+}
+
+func (sc *StructCache) SetUpdatedAt() {
+	if sc.UpdatedAtField != nil && sc.UpdatedAtField.CanSet() {
+		sc.UpdatedAtField.Set(reflect.ValueOf(NewTimestamp()))
+	}
+}
+
+func (sc *StructCache) SetDeletedAt() {
+	if sc.DeletedAtField != nil && sc.DeletedAtField.CanSet() {
+		sc.DeletedAtField.Set(reflect.ValueOf(NilTimestamp()))
+	}
+}
+
+// getIndexFieldValues returns the index fields and values for the given model.
+func getIndexFieldValues(rv reflect.Value, id string) []IndexField {
+	var indexFields []IndexField
+
+	for j := 0; j < rv.NumField(); j++ {
+		field := rv.Type().Field(j)
+		value := rv.Field(j).String()
 		if strings.Contains(field.Tag.Get("pomdb"), "index") {
 			tagname := field.Tag.Get("json")
 
 			log.Printf("model has unique field: %s", tagname)
 
-			indexFields = append(indexFields, IndexFieldValue{
-				ID:    getIdFieldValue(rv),
+			indexFields = append(indexFields, IndexField{
+				ID:    id,
 				Field: tagname,
 				Value: value,
 			})
@@ -71,72 +79,136 @@ func getIndexFieldValues(rv reflect.Value) []IndexFieldValue {
 	return indexFields
 }
 
-// setModelFields validates the fields of the given model.
-func setModelObjectId(i interface{}) {
+func dereferenceStruct(i interface{}) (reflect.Value, error) {
 	rv := reflect.ValueOf(i)
-	if rv.Kind() == reflect.Ptr {
-		rv = rv.Elem()
+	if rv.Kind() != reflect.Ptr || rv.IsNil() {
+		return reflect.Value{}, errors.New("input must be a non-nil pointer to a struct")
 	}
 
-	// Set the ID field
-	for j := 0; j < rv.Elem().NumField(); j++ {
-		field := rv.Elem().Type().Field(j)
-		if strings.Contains(field.Tag.Get("pomdb"), "id") {
-			// Set the ID field
-			rv.Elem().FieldByName("ID").Set(reflect.ValueOf(NewObjectID()))
-			return
-		}
+	elem := rv.Elem()
+	if elem.Kind() != reflect.Struct {
+		return reflect.Value{}, errors.New("input must be a pointer to a struct")
 	}
+
+	if hasPomdbModel(elem) {
+		// pomdb.Model is present and assumed to be correctly structured
+		return elem, nil
+	}
+
+	rootTags := map[string]bool{
+		"id":         true,
+		"created_at": true,
+		"updated_at": true,
+		"deleted_at": true,
+	}
+
+	// Check root level fields and return the dereferenced struct
+	if err := checkRootLevelFields(elem, rootTags); err != nil {
+		return reflect.Value{}, err
+	}
+
+	return elem, nil
 }
 
-// setModelTimestamps sets the CreatedAt and UpdatedAt fields of the given model.
-func setModelTimestamps(i interface{}) {
-	rv := reflect.ValueOf(i)
-	if rv.Kind() == reflect.Ptr {
-		rv = rv.Elem()
-	}
-
-	// Set the CreatedAt and UpdatedAt fields
-	for j := 0; j < rv.Elem().NumField(); j++ {
-		field := rv.Elem().Type().Field(j)
-		if strings.Contains(field.Tag.Get("pomdb"), "created_at") {
-			// Set the CreatedAt field
-			rv.Elem().FieldByName("CreatedAt").Set(reflect.ValueOf(NewTimestamp()))
-		}
-		if strings.Contains(field.Tag.Get("pomdb"), "updated_at") {
-			// Set the UpdatedAt field
-			rv.Elem().FieldByName("UpdatedAt").Set(reflect.ValueOf(NewTimestamp()))
+func hasPomdbModel(v reflect.Value) bool {
+	typ := v.Type()
+	for j := 0; j < v.NumField(); j++ {
+		fieldType := typ.Field(j)
+		pomdbModelName := "Model"
+		pomdbPkgPath := "github.com/pomdb/pomdb-go"
+		if fieldType.Anonymous && fieldType.Type.Name() == pomdbModelName && fieldType.Type.PkgPath() == pomdbPkgPath {
+			return true
 		}
 	}
+	return false
 }
 
-// setModelDeletedAt sets the DeletedAt field of the given model.
-func setModelDeletedAt(i interface{}) {
-	rv := reflect.ValueOf(i)
-	if rv.Kind() == reflect.Ptr {
-		rv = rv.Elem()
-	}
+func checkRootLevelFields(v reflect.Value, rootTags map[string]bool) error {
+	typ := v.Type()
+	idFieldFound := false
 
-	// Set the DeletedAt field
-	for j := 0; j < rv.Elem().NumField(); j++ {
-		field := rv.Elem().Type().Field(j)
-		if strings.Contains(field.Tag.Get("pomdb"), "deleted_at") {
-			// Set the DeletedAt field
-			rv.Elem().FieldByName("DeletedAt").Set(reflect.ValueOf(NilTimestamp()))
+	for j := 0; j < v.NumField(); j++ {
+		field := v.Field(j)
+		fieldType := typ.Field(j)
+		tagValue := fieldType.Tag.Get("pomdb")
+		tagParts := strings.Split(tagValue, ",")
+
+		for _, tagPart := range tagParts {
+			if rootTags[tagPart] {
+				if tagPart == "id" {
+					idFieldFound = true
+				}
+				if err := checkSettable(field, fieldType.Name); err != nil {
+					return err
+				}
+			}
 		}
 	}
+
+	if !idFieldFound {
+		return errors.New("required 'id' field not found at the root level")
+	}
+
+	return nil
 }
 
-// setNewModelFields validates the fields of the given model.
-func setNewModelFields(i interface{}) error {
-	// Set the ID field
-	setModelObjectId(i)
+func checkSettable(field reflect.Value, fieldName string) error {
+	if !field.CanSet() {
+		if isExported := unicode.IsUpper([]rune(fieldName)[0]); !isExported {
+			return fmt.Errorf("field '%s' is not exported and therefore not settable", fieldName)
+		}
+		if field.Kind() == reflect.Ptr && field.IsNil() {
+			return fmt.Errorf("field '%s' is a nil pointer and not settable", fieldName)
+		}
+	}
+	return nil
+}
 
-	// Set the CreatedAt and UpdatedAt fields
-	setModelTimestamps(i)
+func buildStructCache(rv reflect.Value) *StructCache {
+	sc := &StructCache{}
 
-	// Set the DeletedAt field
-	setModelDeletedAt(i)
+	// Get the collection name
+	sc.Collection = pluralize.NewClient().Plural(strcase.ToSnake(rv.Type().Name()))
 
+	// Log the original and final names
+	log.Printf("Collection: %s -> %s", rv.Type().Name(), sc.Collection)
+
+	if hasPomdbModel(rv) {
+		// Use fields from embedded pomdb.Model
+		sc.IDField = getFieldFromStruct(rv, "ID")
+		sc.CreatedAtField = getFieldFromStruct(rv, "CreatedAt")
+		sc.UpdatedAtField = getFieldFromStruct(rv, "UpdatedAt")
+		sc.DeletedAtField = getFieldFromStruct(rv, "DeletedAt")
+	} else {
+		// Look for user-defined fields with pomdb tags at the root level
+		typ := rv.Type()
+		for j := 0; j < rv.NumField(); j++ {
+			field := rv.Field(j)
+			fieldType := typ.Field(j)
+			tagValue := fieldType.Tag.Get("pomdb")
+
+			if strings.Contains(tagValue, "id") {
+				sc.IDField = &field
+			}
+			if strings.Contains(tagValue, "created_at") {
+				sc.CreatedAtField = &field
+			}
+			if strings.Contains(tagValue, "updated_at") {
+				sc.UpdatedAtField = &field
+			}
+			if strings.Contains(tagValue, "deleted_at") {
+				sc.DeletedAtField = &field
+			}
+		}
+	}
+
+	return sc
+}
+
+func getFieldFromStruct(v reflect.Value, fieldName string) *reflect.Value {
+	field := v.FieldByName(fieldName)
+	if field.IsValid() {
+		return &field
+	}
 	return nil
 }

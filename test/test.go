@@ -32,5 +32,5 @@ func main() {
 		log.Fatal(err)
 	}
 
-	log.Printf("Created user with ETag: %s", *res)
+	log.Printf("created user with ETag: %s", *res)
 }
