@@ -82,12 +82,12 @@ func getIndexFieldValues(rv reflect.Value, id string) []IndexField {
 func dereferenceStruct(i interface{}) (reflect.Value, error) {
 	rv := reflect.ValueOf(i)
 	if rv.Kind() != reflect.Ptr || rv.IsNil() {
-		return reflect.Value{}, errors.New("input must be a non-nil pointer to a struct")
+		return reflect.Value{}, errors.New("[Error] DereferenceStruct: model must be a non-nil pointer")
 	}
 
 	elem := rv.Elem()
 	if elem.Kind() != reflect.Struct {
-		return reflect.Value{}, errors.New("input must be a pointer to a struct")
+		return reflect.Value{}, errors.New("[Error] DereferenceStruct: model must be a pointer to a struct")
 	}
 
 	if hasPomdbModel(elem) {
@@ -135,7 +135,7 @@ func checkRootLevelFields(v reflect.Value, rootTags map[string]bool) error {
 
 		for _, tagPart := range tagParts {
 			if rootTags[tagPart] {
-				if tagPart == "id" {
+				if tagPart == "id" && fieldType.Type.Name() == "ObjectID" {
 					idFieldFound = true
 				}
 				if err := checkSettable(field, fieldType.Name); err != nil {
@@ -146,7 +146,7 @@ func checkRootLevelFields(v reflect.Value, rootTags map[string]bool) error {
 	}
 
 	if !idFieldFound {
-		return errors.New("required 'id' field not found at the root level")
+		return errors.New("[Error] CheckRootLevelFields: model must have an 'id' field of type 'ObjectID'")
 	}
 
 	return nil
@@ -155,10 +155,10 @@ func checkRootLevelFields(v reflect.Value, rootTags map[string]bool) error {
 func checkSettable(field reflect.Value, fieldName string) error {
 	if !field.CanSet() {
 		if isExported := unicode.IsUpper([]rune(fieldName)[0]); !isExported {
-			return fmt.Errorf("field '%s' is not exported and therefore not settable", fieldName)
+			return fmt.Errorf("[Error] CheckSettable: field '%s' is not exported and therefore not settable", fieldName)
 		}
 		if field.Kind() == reflect.Ptr && field.IsNil() {
-			return fmt.Errorf("field '%s' is a nil pointer and not settable", fieldName)
+			return fmt.Errorf("[Error] CheckSettable: field '%s' is a nil pointer and not settable", fieldName)
 		}
 	}
 	return nil

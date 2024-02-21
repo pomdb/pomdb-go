@@ -13,7 +13,7 @@ import (
 )
 
 // ErrInvalidHex indicates that a hex string cannot be converted to an ObjectID.
-var ErrInvalidHex = errors.New("the provided hex string is not a valid ObjectID")
+var ErrInvalidHex = errors.New("[Error] ObjectID: the provided hex string is not a valid ObjectID")
 
 var objectIDCounter = readRandomUint32()
 var processUnique = processUniqueBytes()

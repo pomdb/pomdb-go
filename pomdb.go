@@ -54,8 +54,6 @@ func (c *Client) CheckBucket() error {
 // CheckIndexExists checks if an index item exists in the given collection.
 func (c *Client) CheckIndexExists(collection string, indexFields []IndexField) error {
 	for _, indexField := range indexFields {
-		log.Printf("CheckIndexExists: collection=%s, indexField=%v", collection, indexField)
-
 		// Encode the index field value in base64
 		code := base64.StdEncoding.EncodeToString([]byte(indexField.Value))
 
@@ -74,7 +72,7 @@ func (c *Client) CheckIndexExists(collection string, indexFields []IndexField) e
 		}
 
 		if err == nil {
-			return fmt.Errorf("index item already exists")
+			return fmt.Errorf("[Error] CheckIndexExists: index item already exists")
 		}
 	}
 
