@@ -5,6 +5,13 @@ import (
 	"time"
 )
 
+var managedTags = map[string]bool{
+	"id":         true,
+	"created_at": true,
+	"updated_at": true,
+	"deleted_at": true,
+}
+
 type Timestamp time.Time
 
 func NewTimestamp() Timestamp {
@@ -47,8 +54,8 @@ func (t Timestamp) IsNil() bool {
 }
 
 type Model struct {
-	ID        ObjectID  `json:"id"`
-	CreatedAt Timestamp `json:"created_at"`
-	UpdatedAt Timestamp `json:"updated_at"`
-	DeletedAt Timestamp `json:"deleted_at"`
+	ID        ObjectID  `json:"id" pomdb:"id"`
+	CreatedAt Timestamp `json:"created_at" pomdb:"created_at"`
+	UpdatedAt Timestamp `json:"updated_at" pomdb:"updated_at"`
+	DeletedAt Timestamp `json:"deleted_at" pomdb:"deleted_at"`
 }

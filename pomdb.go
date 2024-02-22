@@ -93,7 +93,7 @@ func (c *Client) CreateIndexItem(collection string, indexFields []IndexField) er
 		put := &s3.PutObjectInput{
 			Bucket: &c.Bucket,
 			Key:    &key,
-			Body:   bytes.NewReader([]byte(indexField.ID)),
+			Body:   bytes.NewReader([]byte(indexField.ModelID)),
 		}
 
 		if _, err := c.Service.PutObject(context.TODO(), put); err != nil {

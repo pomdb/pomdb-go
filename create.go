@@ -16,10 +16,13 @@ func (c *Client) Create(i interface{}) (*string, error) {
 	}
 
 	// Build the struct cache
-	ca := buildStructCache(rv)
+	ca := NewModelCache(rv)
 
 	// Set the new model fields
-	id := ca.SetNewModelFields()
+	ca.SetManagedFields()
+
+	// Get the model ID
+	id := ca.GetModelID()
 
 	// Get the collection
 	co := ca.Collection
