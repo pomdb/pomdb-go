@@ -9,12 +9,18 @@ import (
 	"github.com/iancoleman/strcase"
 )
 
+type IndexField struct {
+	Field string
+	Value string
+}
+
 type ModelCache struct {
-	ModelID    *reflect.Value
-	CreatedAt  *reflect.Value
-	UpdatedAt  *reflect.Value
-	DeletedAt  *reflect.Value
-	Collection string
+	ModelID     *reflect.Value
+	IndexFields []IndexField
+	CreatedAt   *reflect.Value
+	UpdatedAt   *reflect.Value
+	DeletedAt   *reflect.Value
+	Collection  string
 }
 
 func NewModelCache(rv reflect.Value) *ModelCache {
@@ -55,9 +61,25 @@ func NewModelCache(rv reflect.Value) *ModelCache {
 		}
 	}
 
+	for j := 0; j < rv.NumField(); j++ {
+		field := rv.Type().Field(j)
+		value := rv.Field(j).String()
+		if strings.Contains(field.Tag.Get("pomdb"), "index") {
+			tagname := field.Tag.Get("json")
+
+			log.Printf("model has unique field: %s", tagname)
+
+			mc.IndexFields = append(mc.IndexFields, IndexField{
+				Field: tagname,
+				Value: value,
+			})
+		}
+	}
+
 	return mc
 }
 
+// SetManagedFields sets the managed fields in the cache.
 func (mc *ModelCache) SetManagedFields() {
 	mc.ModelID.Set(reflect.ValueOf(NewObjectID()))
 
@@ -77,12 +99,14 @@ func (mc *ModelCache) GetModelID() string {
 	return mc.ModelID.Interface().(ObjectID).String()
 }
 
+// SetUpdatedAt sets the UpdatedAt field in the cache.
 func (mc *ModelCache) SetUpdatedAt() {
 	if mc.UpdatedAt != nil && mc.UpdatedAt.CanSet() {
 		mc.UpdatedAt.Set(reflect.ValueOf(NewTimestamp()))
 	}
 }
 
+// SetDeletedAt sets the DeletedAt field in the cache.
 func (mc *ModelCache) SetDeletedAt() {
 	if mc.DeletedAt != nil && mc.DeletedAt.CanSet() {
 		mc.DeletedAt.Set(reflect.ValueOf(NilTimestamp()))

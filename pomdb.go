@@ -52,13 +52,13 @@ func (c *Client) CheckBucket() error {
 }
 
 // CheckIndexExists checks if an index item exists in the given collection.
-func (c *Client) CheckIndexExists(collection string, indexFields []IndexField) error {
-	for _, indexField := range indexFields {
+func (c *Client) CheckIndexExists(cache *ModelCache) error {
+	for _, index := range cache.IndexFields {
 		// Encode the index field value in base64
-		code := base64.StdEncoding.EncodeToString([]byte(indexField.Value))
+		code := base64.StdEncoding.EncodeToString([]byte(index.Value))
 
 		// Create the key path for the index item
-		key := collection + "/indexes/" + indexField.Field + "/" + code
+		key := cache.Collection + "/indexes/" + index.Field + "/" + code
 
 		head := &s3.HeadObjectInput{
 			Bucket: &c.Bucket,
@@ -80,20 +80,22 @@ func (c *Client) CheckIndexExists(collection string, indexFields []IndexField) e
 }
 
 // CreateIndexItem creates an index item in the given collection.
-func (c *Client) CreateIndexItem(collection string, indexFields []IndexField) error {
-	for _, indexField := range indexFields {
-		log.Printf("CreateIndexItem: collection=%s, indexField=%v", collection, indexField)
+func (c *Client) CreateIndexItem(cache *ModelCache) error {
+	id := cache.ModelID.Interface().(ObjectID).String()
+
+	for _, index := range cache.IndexFields {
+		log.Printf("CreateIndexItem: collection=%s, indexField=%v", cache.Collection, index)
 
 		// Encode the index field value in base64
-		code := base64.StdEncoding.EncodeToString([]byte(indexField.Value))
+		code := base64.StdEncoding.EncodeToString([]byte(index.Value))
 
 		// Create the key path for the index item
-		key := collection + "/indexes/" + indexField.Field + "/" + code
+		key := cache.Collection + "/indexes/" + index.Field + "/" + code
 
 		put := &s3.PutObjectInput{
 			Bucket: &c.Bucket,
 			Key:    &key,
-			Body:   bytes.NewReader([]byte(indexField.ModelID)),
+			Body:   bytes.NewReader([]byte(id)),
 		}
 
 		if _, err := c.Service.PutObject(context.TODO(), put); err != nil {

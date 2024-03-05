@@ -3,40 +3,10 @@ package pomdb
 import (
 	"errors"
 	"fmt"
-	"log"
 	"reflect"
 	"strings"
 	"unicode"
 )
-
-type IndexField struct {
-	ModelID string
-	Field   string
-	Value   string
-}
-
-// getIndexFieldValues returns the index fields and values for the given model.
-func getIndexFieldValues(rv reflect.Value, id string) []IndexField {
-	var indexFields []IndexField
-
-	for j := 0; j < rv.NumField(); j++ {
-		field := rv.Type().Field(j)
-		value := rv.Field(j).String()
-		if strings.Contains(field.Tag.Get("pomdb"), "index") {
-			tagname := field.Tag.Get("json")
-
-			log.Printf("model has unique field: %s", tagname)
-
-			indexFields = append(indexFields, IndexField{
-				ModelID: id,
-				Field:   tagname,
-				Value:   value,
-			})
-		}
-	}
-
-	return indexFields
-}
 
 func dereferenceStruct(i interface{}) (reflect.Value, error) {
 	rv := reflect.ValueOf(i)

@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
+// Create creates a record in the database
 func (c *Client) Create(i interface{}) (*string, error) {
 	// Dereference the input
 	rv, err := dereferenceStruct(i)
@@ -27,12 +28,12 @@ func (c *Client) Create(i interface{}) (*string, error) {
 	// Get the collection
 	co := ca.Collection
 
-	if ifv := getIndexFieldValues(rv, id); len(ifv) > 0 {
-		if err := c.CheckIndexExists(co, ifv); err != nil {
+	if len(ca.IndexFields) > 0 {
+		if err := c.CheckIndexExists(ca); err != nil {
 			return nil, err
 		}
 
-		if err := c.CreateIndexItem(co, ifv); err != nil {
+		if err := c.CreateIndexItem(ca); err != nil {
 			return nil, err
 		}
 	}
