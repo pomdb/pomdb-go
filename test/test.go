@@ -27,10 +27,20 @@ func main() {
 		Email:    "john.doe@zip.com",
 	}
 
-	res, err := client.Create(&user)
+	crt, err := client.Create(&user)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.Printf("created user with ETag: %s", *res)
+	log.Printf("created user with ETag: %s", *crt)
+
+	user.FullName = "Jane Doe"
+	user.Email = "jane.doe@zip.com"
+
+	upt, err := client.Update(&user)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Printf("updated user with ETag: %s", *upt)
 }

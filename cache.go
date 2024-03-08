@@ -1,6 +1,7 @@
 package pomdb
 
 import (
+	"fmt"
 	"log"
 	"reflect"
 	"strings"
@@ -12,6 +13,7 @@ import (
 type IndexField struct {
 	Field string
 	Value string
+	OlVal string
 }
 
 type ModelCache struct {
@@ -111,4 +113,21 @@ func (mc *ModelCache) SetDeletedAt() {
 	if mc.DeletedAt != nil && mc.DeletedAt.CanSet() {
 		mc.DeletedAt.Set(reflect.ValueOf(NilTimestamp()))
 	}
+}
+
+// CompareIndexFields compares the index fields in the cache to the input.
+func (mc *ModelCache) CompareIndexFields(i interface{}) bool {
+	rv := reflect.ValueOf(i) // represents a map
+
+	diff := false
+	for k, index := range mc.IndexFields {
+		value := fmt.Sprintf("%v", rv.MapIndex(reflect.ValueOf(index.Field)).Interface())
+
+		if value != index.Value {
+			mc.IndexFields[k].OlVal = value
+			diff = true
+		}
+	}
+
+	return diff
 }

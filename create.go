@@ -33,7 +33,7 @@ func (c *Client) Create(i interface{}) (*string, error) {
 			return nil, err
 		}
 
-		if err := c.CreateIndexItem(ca); err != nil {
+		if err := c.CreateIndexItems(ca); err != nil {
 			return nil, err
 		}
 	}

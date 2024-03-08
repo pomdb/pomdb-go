@@ -1,12 +1,78 @@
 package pomdb
 
-// Update updates a record in the database. It takes a pointer to a struct
-// containing the fields that have changed, and a pointer to the model struct
-// used to unmarshal json from the database. The struct must have a field with
-// the `pomdb:"id"` tag. The function will fetch the existing record and check
-// if any index fields have changed. If so, it will remove the old index item
-// and create a new one. It will then update the changed fields in the record
-// and save it to the database. It's not a new record, so it does not need to
-// set the managed fields. It's safe to overwrite an existing index item with
-// the same key, so we don't need to check if the index item exists before
-// creating it. The function returns the etag of the updated record.
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+)
+
+// Update updates a record in the database.
+func (c *Client) Update(i interface{}) (*string, error) {
+	// Dereference the input
+	rv, err := dereferenceStruct(i)
+	if err != nil {
+		return nil, err
+	}
+
+	// Build the struct cache
+	ca := NewModelCache(rv)
+
+	// Get the model ID
+	id := ca.GetModelID()
+
+	// Get the collection
+	co := ca.Collection
+
+	// Set the record's key
+	key := co + "/" + id
+
+	// Use s3 to get the record
+	get := &s3.GetObjectInput{
+		Bucket: &c.Bucket,
+		Key:    &key,
+	}
+
+	// Get the record's data
+	doc, err := c.Service.GetObject(context.TODO(), get)
+	if err != nil {
+		return nil, err
+	}
+
+	// Unmarshal the record
+	var rec interface{}
+	if err := json.NewDecoder(doc.Body).Decode(&rec); err != nil {
+		return nil, err
+	}
+
+	// Check/update indexes
+	if len(ca.IndexFields) > 0 {
+		if diff := ca.CompareIndexFields(rec); diff {
+			if err := c.UpdateIndexItems(ca); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	// Marshal the record
+	jsn, err := json.Marshal(i)
+	if err != nil {
+		return nil, err
+	}
+
+	// Set the record's data
+	put := &s3.PutObjectInput{
+		Bucket: &c.Bucket,
+		Key:    &key,
+		Body:   bytes.NewReader(jsn),
+	}
+
+	// Set the record's etag
+	res, err := c.Service.PutObject(context.TODO(), put)
+	if err != nil {
+		return nil, err
+	}
+
+	return res.ETag, nil
+}
