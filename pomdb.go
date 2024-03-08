@@ -72,7 +72,7 @@ func (c *Client) CheckIndexExists(cache *ModelCache) error {
 		}
 
 		if err == nil {
-			return fmt.Errorf("[Error] CheckIndexExists: index item already exists")
+			return fmt.Errorf("[Error] CheckIndexExists: index %s with value %s already exists", index.Field, index.Value)
 		}
 	}
 

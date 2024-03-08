@@ -26,7 +26,7 @@ func main() {
 	user := User{
 		FullName: "John Pip",
 		Email:    "john.pip@zip.com",
-		Phone:    "0987654321",
+		Phone:    "1234567890",
 	}
 
 	crt, err := client.Create(&user)
@@ -36,9 +36,9 @@ func main() {
 
 	log.Printf("created user with ETag: %s", *crt)
 
-	user.FullName = "Jane Pip"
+	user.FullName = "Jane Doe"
 	user.Email = "jane.pip@zip.com"
-	user.Phone = "1234567890"
+	user.Phone = "0987654321"
 
 	upt, err := client.Update(&user)
 	if err != nil {
