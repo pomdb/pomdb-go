@@ -10,6 +10,7 @@ type User struct {
 	pomdb.Model
 	FullName string `json:"full_name" validate:"required"`
 	Email    string `json:"email" validate:"required,email" pomdb:"index"`
+	Phone    string `json:"phone" validate:"required,phone" pomdb:"index"`
 }
 
 var client = pomdb.Client{
@@ -23,8 +24,9 @@ func main() {
 	}
 
 	user := User{
-		FullName: "John Doe",
-		Email:    "john.doe@zip.com",
+		FullName: "John Pip",
+		Email:    "john.pip@zip.com",
+		Phone:    "0987654321",
 	}
 
 	crt, err := client.Create(&user)
@@ -34,8 +36,9 @@ func main() {
 
 	log.Printf("created user with ETag: %s", *crt)
 
-	user.FullName = "Jane Doe"
-	user.Email = "jane.doe@zip.com"
+	user.FullName = "Jane Pip"
+	user.Email = "jane.pip@zip.com"
+	user.Phone = "1234567890"
 
 	upt, err := client.Update(&user)
 	if err != nil {

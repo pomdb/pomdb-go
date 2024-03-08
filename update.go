@@ -49,6 +49,10 @@ func (c *Client) Update(i interface{}) (*string, error) {
 	// Check/update indexes
 	if len(ca.IndexFields) > 0 {
 		if diff := ca.CompareIndexFields(rec); diff {
+			if err := c.CheckIndexExists(ca); err != nil {
+				return nil, err
+			}
+
 			if err := c.UpdateIndexItems(ca); err != nil {
 				return nil, err
 			}
