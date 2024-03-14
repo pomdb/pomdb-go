@@ -23,34 +23,49 @@ func main() {
 		log.Fatal(err)
 	}
 
-	user := User{
-		FullName: "John Pip",
-		Email:    "john.pip@zip.com",
-		Phone:    "1234567890",
+	// user := User{
+	// 	FullName: "John Pip",
+	// 	Email:    "john.pip@zip.com",
+	// 	Phone:    "1234567890",
+	// }
+
+	// crt, err := client.Create(&user)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	// log.Printf("created user with ETag: %s", *crt)
+
+	// user.FullName = "Jane Doe"
+	// user.Email = "jane.pip@zip.com"
+	// user.Phone = "0987654321"
+
+	// upt, err := client.Update(&user)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	// log.Printf("updated user with ETag: %s", *upt)
+
+	// del, err := client.Delete(&user)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	// log.Printf("deleted data for ID: %s", *del)
+
+	query := pomdb.Query{
+		Model: &User{},
+		Field: "email",
+		Value: "jane.pip@zip.com",
 	}
 
-	crt, err := client.Create(&user)
+	obj, err := client.FindOne(query)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.Printf("created user with ETag: %s", *crt)
+	doc := obj.(*User)
 
-	user.FullName = "Jane Doe"
-	user.Email = "jane.pip@zip.com"
-	user.Phone = "0987654321"
-
-	upt, err := client.Update(&user)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Printf("updated user with ETag: %s", *upt)
-
-	del, err := client.Delete(&user)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Printf("deleted data for ID: %s", *del)
+	log.Printf("FindOne: found user %s with ID %s", doc.FullName, doc.ID)
 }

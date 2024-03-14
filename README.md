@@ -217,11 +217,12 @@ if err := client.Delete(&user); err != nil {
 
 ```go
 query := pomdb.Query{
+  Model: User{},
   Field: "email",
   Value: "jane.doe@bar.com",
 }
 
-obj, err := client.FindOne("users", query)
+obj, err := client.FindOne(query)
 if err != nil {
   log.Fatal(err)
 }
