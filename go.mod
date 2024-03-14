@@ -7,7 +7,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.52.0
 	github.com/gertd/go-pluralize v0.2.1
 	github.com/iancoleman/strcase v0.3.0
-	github.com/mitchellh/mapstructure v1.5.0
 )
 
 require (
