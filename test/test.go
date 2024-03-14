@@ -8,9 +8,9 @@ import (
 
 type User struct {
 	pomdb.Model
-	FullName string `json:"full_name" validate:"required"`
-	Email    string `json:"email" validate:"required,email" pomdb:"index"`
-	Phone    string `json:"phone" validate:"required,phone" pomdb:"index"`
+	FullName string `json:"full_name" validate:"required" pomdb:"index"`
+	Email    string `json:"email" validate:"required,email" pomdb:"unique"`
+	Phone    string `json:"phone" validate:"required,phone" pomdb:"unique"`
 }
 
 var client = pomdb.Client{

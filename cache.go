@@ -11,9 +11,10 @@ import (
 )
 
 type IndexField struct {
-	Field string
-	Value string
-	OlVal string
+	FieldName     string
+	CurrentValue  string
+	PreviousValue string
+	IsUnique      bool
 }
 
 type ModelCache struct {
@@ -66,14 +67,27 @@ func NewModelCache(rv reflect.Value) *ModelCache {
 	for j := 0; j < rv.NumField(); j++ {
 		field := rv.Type().Field(j)
 		value := rv.Field(j).String()
-		if strings.Contains(field.Tag.Get("pomdb"), "index") {
+		if strings.Contains(field.Tag.Get("pomdb"), "unique") {
 			tagname := field.Tag.Get("json")
 
 			log.Printf("model has unique field: %s", tagname)
 
 			mc.IndexFields = append(mc.IndexFields, IndexField{
-				Field: tagname,
-				Value: value,
+				FieldName:    tagname,
+				CurrentValue: value,
+				IsUnique:     true,
+			})
+		}
+
+		if strings.Contains(field.Tag.Get("pomdb"), "index") {
+			tagname := field.Tag.Get("json")
+
+			log.Printf("model has index field: %s", tagname)
+
+			mc.IndexFields = append(mc.IndexFields, IndexField{
+				FieldName:    tagname,
+				CurrentValue: value,
+				IsUnique:     false,
 			})
 		}
 	}
@@ -121,10 +135,10 @@ func (mc *ModelCache) CompareIndexFields(i interface{}) bool {
 
 	diff := false
 	for k, index := range mc.IndexFields {
-		value := fmt.Sprintf("%v", rv.MapIndex(reflect.ValueOf(index.Field)).Interface())
+		value := fmt.Sprintf("%v", rv.MapIndex(reflect.ValueOf(index.FieldName)).Interface())
 
-		if value != index.Value {
-			mc.IndexFields[k].OlVal = value
+		if value != index.CurrentValue {
+			mc.IndexFields[k].PreviousValue = value
 			diff = true
 		}
 	}

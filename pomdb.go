@@ -54,25 +54,27 @@ func (c *Client) CheckBucket() error {
 // CheckIndexExists checks if an index item exists in the given collection.
 func (c *Client) CheckIndexExists(cache *ModelCache) error {
 	for _, index := range cache.IndexFields {
-		// Encode the index field value in base64
-		code := base64.StdEncoding.EncodeToString([]byte(index.Value))
+		if index.IsUnique {
+			// Encode the index field value in base64
+			code := base64.StdEncoding.EncodeToString([]byte(index.CurrentValue))
 
-		// Create the key path for the index item
-		key := cache.Collection + "/indexes/" + index.Field + "/" + code
+			// Create the key path for the index item
+			key := cache.Collection + "/indexes/" + index.FieldName + "/" + code
 
-		head := &s3.HeadObjectInput{
-			Bucket: &c.Bucket,
-			Key:    &key,
-		}
+			head := &s3.HeadObjectInput{
+				Bucket: &c.Bucket,
+				Key:    &key,
+			}
 
-		var notFound *types.NotFound
-		_, err := c.Service.HeadObject(context.TODO(), head)
-		if err != nil && !errors.As(err, &notFound) {
-			return err
-		}
+			var notFound *types.NotFound
+			_, err := c.Service.HeadObject(context.TODO(), head)
+			if err != nil && !errors.As(err, &notFound) {
+				return err
+			}
 
-		if err == nil {
-			return fmt.Errorf("[Error] CheckIndexExists: index %s with value %s already exists", index.Field, index.Value)
+			if err == nil {
+				return fmt.Errorf("[Error] CheckIndexExists: index %s with value %s already exists", index.FieldName, index.CurrentValue)
+			}
 		}
 	}
 
@@ -87,10 +89,10 @@ func (c *Client) CreateIndexItems(cache *ModelCache) error {
 		log.Printf("CreateIndexItem: collection=%s, indexField=%v", cache.Collection, index)
 
 		// Encode the index field value in base64
-		code := base64.StdEncoding.EncodeToString([]byte(index.Value))
+		code := base64.StdEncoding.EncodeToString([]byte(index.CurrentValue))
 
 		// Create the key path for the index item
-		key := cache.Collection + "/indexes/" + index.Field + "/" + code
+		key := cache.Collection + "/indexes/" + index.FieldName + "/" + code
 
 		put := &s3.PutObjectInput{
 			Bucket: &c.Bucket,
@@ -111,14 +113,14 @@ func (c *Client) UpdateIndexItems(cache *ModelCache) error {
 	id := cache.ModelID.Interface().(ObjectID).String()
 
 	for _, index := range cache.IndexFields {
-		if index.OlVal != "" {
+		if index.PreviousValue != "" {
 			log.Printf("UpdateIndexItem: collection=%s, indexField=%v", cache.Collection, index)
 
 			// Encode the index field value in base64
-			code := base64.StdEncoding.EncodeToString([]byte(index.OlVal))
+			code := base64.StdEncoding.EncodeToString([]byte(index.PreviousValue))
 
 			// Create the key path for the old index item
-			oldKey := cache.Collection + "/indexes/" + index.Field + "/" + code
+			oldKey := cache.Collection + "/indexes/" + index.FieldName + "/" + code
 
 			// Delete the old index item
 			del := &s3.DeleteObjectInput{
@@ -131,10 +133,10 @@ func (c *Client) UpdateIndexItems(cache *ModelCache) error {
 			}
 
 			// Encode the index field value in base64
-			code = base64.StdEncoding.EncodeToString([]byte(index.Value))
+			code = base64.StdEncoding.EncodeToString([]byte(index.CurrentValue))
 
 			// Create the key path for the new index item
-			newKey := cache.Collection + "/indexes/" + index.Field + "/" + code
+			newKey := cache.Collection + "/indexes/" + index.FieldName + "/" + code
 
 			put := &s3.PutObjectInput{
 				Bucket: &c.Bucket,
