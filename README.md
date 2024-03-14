@@ -34,20 +34,20 @@ go get github.com/pomdb/pomdb-go
 package main
 
 import (
-	"log"
+  "log"
 
-	"github.com/pomdb/pomdb-go"
+  "github.com/pomdb/pomdb-go"
 )
 
 type User struct {
-	pomdb.Model
-	FullName string `json:"full_name" validate:"required"`
-	Email    string `json:"email" validate:"required,email" pomdb:"index,unique"`
+  pomdb.Model
+  FullName string `json:"full_name" validate:"required"`
+  Email    string `json:"email" validate:"required,email" pomdb:"index,unique"`
 }
 
 var client = pomdb.Client{
-	Bucket: "pomdb",
-	Region: "us-east-1",
+  Bucket: "pomdb",
+  Region: "us-east-1",
 }
 
 func main() {
