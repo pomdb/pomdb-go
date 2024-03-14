@@ -152,3 +152,29 @@ func (c *Client) UpdateIndexItems(cache *ModelCache) error {
 
 	return nil
 }
+
+// DeleteIndexItems deletes index items in the given collection.
+func (c *Client) DeleteIndexItems(cache *ModelCache) error {
+	for _, index := range cache.IndexFields {
+		log.Printf("DeleteIndexItem: collection=%s, indexField=%v", cache.Collection, index)
+
+		// Encode the index field value in base64
+		code := base64.StdEncoding.EncodeToString([]byte(index.CurrentValue))
+
+		// Create the key path for the index item
+		key := cache.Collection + "/indexes/" + index.FieldName + "/" + code
+
+		del := &s3.DeleteObjectInput{
+			Bucket: &c.Bucket,
+			Key:    &key,
+		}
+
+		var notFound *types.NotFound
+		_, err := c.Service.DeleteObject(context.TODO(), del)
+		if err != nil && !errors.As(err, &notFound) {
+			return err
+		}
+	}
+
+	return nil
+}

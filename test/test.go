@@ -46,4 +46,11 @@ func main() {
 	}
 
 	log.Printf("updated user with ETag: %s", *upt)
+
+	del, err := client.Delete(&user)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Printf("deleted data for ID: %s", *del)
 }
