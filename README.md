@@ -175,7 +175,7 @@ type User struct {
 Objects are stored in collections, and represent a single record in the database. Objects can be found in S3 under the following path:
 
 ```
-<bucket>/<pluralized_model_name>/<object_id>
+<bucket>/<collection_name>/<object_id>
 ```
 
 ### Creating
@@ -269,5 +269,9 @@ users := objs.([]User)
 Indexes are used to optimize queries. PomDB supports unique and non-unique indexes using the `pomdb:"index,unique"` and `pomdb:"index"` tags, respectively, and automatically maintains them when objects are created, updated, or deleted. Indexes can be found in S3 under the following path:
 
 ```
-<bucket>/indexes/<pluralized_model_name>/indexes/<field_name>/<base64_encoded_value>
+<bucket>/<collection_name>/indexes/<field_name>/<base64_encoded_value>
 ```
+
+### Encoding strategy
+
+PomDB uses base64 encoding to store index values. This allows for a consistent and predictable way to store and retrieve objects, and ensures that the index keys are valid S3 object keys. The length of the index key is limited to 1024 bytes. If the index key exceeds this limit, PomDB will return an error.
