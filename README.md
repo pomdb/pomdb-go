@@ -51,20 +51,20 @@ var client = pomdb.Client{
 }
 
 func main() {
-	if err := client.Connect(); err != nil {
-		log.Fatal(err)
-	}
+  if err := client.Connect(); err != nil {
+    log.Fatal(err)
+  }
 
-	user := User{
-		FullName: "John Doe",
-		Email:    "john.doe@foo.com",
-	}
+  user := User{
+    FullName: "John Doe",
+    Email:    "john.doe@foo.com",
+  }
 
-	if res, err := client.Create(&user); err != nil {
-		log.Fatal(err)
-	}
+  if res, err := client.Create(&user); err != nil {
+    log.Fatal(err)
+  }
 
-	log.Printf("Created user %s at %d", user.ID, user.CreatedAt)
+  log.Printf("Created user %s at %d", user.ID, user.CreatedAt)
 }
 ```
 
