@@ -42,7 +42,7 @@ import (
 type User struct {
 	pomdb.Model
 	FullName string `json:"full_name" validate:"required"`
-	Email    string `json:"email" validate:"required,email" pomdb:"index"`
+	Email    string `json:"email" validate:"required,email" pomdb:"index,unique"`
 }
 
 var client = pomdb.Client{
@@ -100,8 +100,8 @@ Models are used to manage the structure of collections. Models are defined using
 ```go
 type User struct {
   pomdb.Model
-  FullName string `json:"full_name"`
-  Email    string `json:"email"`
+  FullName string `json:"full_name" pomdb:"index"`
+  Email    string `json:"email" pomdb:"index,unique"`
 }
 
 //...
@@ -118,16 +118,16 @@ PomDB automatically generates an ObjectID for each object stored in the database
 ```go
 type User struct {
   pomdb.Model
-  FullName string `json:"full_name"`
-  Email    string `json:"email"`
+  FullName string `json:"full_name" pomdb:"index"`
+  Email    string `json:"email" pomdb:"index,unique"`
 }
 
 // OR
 
 type User struct {
-  ID       pomdb.ObjectID `json:"id"`
-  FullName string         `json:"full_name"`
-  Email    string         `json:"email"`
+  ID       pomdb.ObjectID `json:"id" pomdb:"id"`
+  FullName string         `json:"full_name" pomdb:"index"`
+  Email    string         `json:"email" pomdb:"index,unique"`
 }
 
 //...
@@ -135,24 +135,24 @@ type User struct {
 
 ### Object Timestamps
 
-When embedding the `pomdb.Model` struct, its fields are automatically added to your model. You can choose to omit these fields, or define them manually. If you choose to define them manually, they must use the same names and types as the fields defined by PomDB:
+When embedding the `pomdb.Model` struct, its fields are automatically added to your model. You can choose to omit these fields, or define them manually. If you choose to define them manually, they must use the same names, types, and tags as the fields defined by PomDB:
 
 ```go
 type User struct {
   pomdb.Model
-  FullName  string `json:"full_name"`
-  Email     string `json:"email"`
+  FullName  string `json:"full_name" pomdb:"index"`
+  Email     string `json:"email" pomdb:"index,unique"`
 }
 
 // OR
 
 type User struct {
-  ID        pomdb.ObjectID  `json:"id"`
-  FullName  string          `json:"full_name"`
-  Email     string          `json:"email"`
-  CreatedAt pomdb.Timestamp `json:"created_at"`
-  UpdatedAt pomdb.Timestamp `json:"updated_at"`
-  DeletedAt pomdb.Timestamp `json:"deleted_at"`
+  ID        pomdb.ObjectID  `json:"id" pomdb:"id"`
+  FullName  string          `json:"full_name" pomdb:"index"`
+  Email     string          `json:"email" pomdb:"index,unique"`
+  CreatedAt pomdb.Timestamp `json:"created_at" pomdb:"created_at"`
+  UpdatedAt pomdb.Timestamp `json:"updated_at" pomdb:"updated_at"`
+  DeletedAt pomdb.Timestamp `json:"deleted_at" pomdb:"deleted_at"`
 }
 
 //...
@@ -165,8 +165,8 @@ PomDB will validate the model before storing it in the database. PomDB uses [go-
 ```go
 type User struct {
   pomdb.Model
-  FullName string `json:"full_name" validate:"required"`
-  Email    string `json:"email" validate:"required,email"`
+  FullName string `json:"full_name" validate:"required" pomdb:"index"`
+  Email    string `json:"email" validate:"required,email" pomdb:"index,unique"`
 }
 ```
 
@@ -175,7 +175,7 @@ type User struct {
 Objects are stored in collections, and represent a single record in the database. Objects can be found in S3 under the following path:
 
 ```
-<bucket>/<pluralized_model_name>/<object_id>.json
+<bucket>/<pluralized_model_name>/<object_id>
 ```
 
 ### Creating
@@ -262,4 +262,12 @@ if err != nil {
 users := objs.([]User)
 
 // ...
+```
+
+## Working with Indexes
+
+Indexes are used to optimize queries. PomDB supports unique and non-unique indexes using the `pomdb:"index,unique"` and `pomdb:"index"` tags, respectively, and automatically maintains them when objects are created, updated, or deleted. Indexes can be found in S3 under the following path:
+
+```
+<bucket>/indexes/<pluralized_model_name>/indexes/<field_name>/<base64_encoded_value>
 ```
