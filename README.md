@@ -113,7 +113,7 @@ PomDB will convert the model name to snake case and pluralize it for the collect
 
 ### Object Identifiers
 
-PomDB automatically generates an ObjectID for each object stored in the database. IDs are stored in the `ID` field of the object in [ObjectId](https://www.mongodb.com/docs/manual/reference/bson-types/#std-label-objectid) format. Models must embed the `pomdb.Model` struct, or define an `ID` field of type `pomdb.ObjectID`:
+PomDB automatically generates an ObjectID for each object stored in the database. IDs are stored in the `ID` field of the object in `pomdb.ObjectID` format. Models must embed the `pomdb.Model` struct, or define an `ID` field of type `pomdb.ObjectID`:
 
 ```go
 type User struct {
