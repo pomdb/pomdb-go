@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"reflect"
-	"strings"
 
 	"github.com/gertd/go-pluralize"
 	"github.com/iancoleman/strcase"
@@ -49,16 +48,16 @@ func NewModelCache(rv reflect.Value) *ModelCache {
 			fieldType := typ.Field(j)
 			tagValue := fieldType.Tag.Get("pomdb")
 
-			if strings.Contains(tagValue, "id") {
+			if tagContains(tagValue, []string{"id"}) {
 				mc.ModelID = &field
 			}
-			if strings.Contains(tagValue, "created_at") {
+			if tagContains(tagValue, []string{"created_at"}) {
 				mc.CreatedAt = &field
 			}
-			if strings.Contains(tagValue, "updated_at") {
+			if tagContains(tagValue, []string{"updated_at"}) {
 				mc.UpdatedAt = &field
 			}
-			if strings.Contains(tagValue, "deleted_at") {
+			if tagContains(tagValue, []string{"deleted_at"}) {
 				mc.DeletedAt = &field
 			}
 		}
@@ -67,25 +66,27 @@ func NewModelCache(rv reflect.Value) *ModelCache {
 	for j := 0; j < rv.NumField(); j++ {
 		field := rv.Type().Field(j)
 		value := rv.Field(j).String()
-		if strings.Contains(field.Tag.Get("pomdb"), "unique") {
-			tagname := field.Tag.Get("json")
 
-			log.Printf("model has unique field: %s", tagname)
+		pmtag := field.Tag.Get("pomdb")
+		jstag := field.Tag.Get("json")
+
+		if tagContains(pmtag, []string{"unique", "index"}) {
+			log.Printf("model has unique field: %s", jstag)
 
 			mc.IndexFields = append(mc.IndexFields, IndexField{
-				FieldName:    tagname,
+				FieldName:    jstag,
 				CurrentValue: value,
 				IsUnique:     true,
 			})
+
+			continue
 		}
 
-		if strings.Contains(field.Tag.Get("pomdb"), "index") {
-			tagname := field.Tag.Get("json")
-
-			log.Printf("model has index field: %s", tagname)
+		if tagContains(pmtag, []string{"index"}) {
+			log.Printf("model has index field: %s", jstag)
 
 			mc.IndexFields = append(mc.IndexFields, IndexField{
-				FieldName:    tagname,
+				FieldName:    jstag,
 				CurrentValue: value,
 				IsUnique:     false,
 			})
