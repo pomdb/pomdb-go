@@ -22,6 +22,15 @@
 - Real-time [change data capture]() via S3 events
 - Schema [migration]() and [validation]()
 
+## Table of Contents
+
+- [Installation](#installation)
+- [Quick start](#quick-start)
+- [Creating a Client](#creating-a-client)
+- [Creating a Model](#creating-a-model)
+- [Working with Objects](#working-with-objects)
+- [Working with Indexes](#working-with-indexes)
+
 ## Installation
 
 ```bash
