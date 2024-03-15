@@ -22,15 +22,6 @@
 - Real-time [change data capture]() via S3 events
 - Schema [migration]() and [validation]()
 
-## Table of Contents
-
-- [Installation](#installation)
-- [Quick start](#quick-start)
-- [Creating a Client](#creating-a-client)
-- [Creating a Model](#creating-a-model)
-- [Working with Objects](#working-with-objects)
-- [Working with Indexes](#working-with-indexes)
-
 ## Installation
 
 ```bash
@@ -284,4 +275,4 @@ Indexes are used to optimize queries. PomDB supports unique and non-unique index
 
 ### Encoding strategy
 
-PomDB uses base64 encoding to store index values. This allows for a consistent and predictable way to store and retrieve objects, and ensures that the index keys are valid S3 object keys. The length of the index key is limited to 1024 bytes. If the index key exceeds this limit, PomDB will return an error.
+PomDB uses base64 encoding to store index values. This allows for a consistent and predictable way to store and retrieve objects, and ensures that the index keys are valid S3 object keys. The length of the index key is limited to 1024 bytes. If the encoded index key exceeds this limit, PomDB will return an error.
