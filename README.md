@@ -10,7 +10,7 @@
     <a href="https://github.com/pomdb/pomdb-go/releases/latest"><img src="https://img.shields.io/github/release/pomdb/pomdb-go.svg?style=flat-square"></a>
   </p>
   <p>
-    <strong>PomDB</strong> is an innovative approach to database management, leveraging the robust storage capabilities of <a href="https://aws.amazon.com/s3">S3</a> to store and retrieve data. PomDB is entirely client-driven and enforces an opinionated structure for consistency, compatibility, and speed :fire:
+    <strong>PomDB</strong> is an innovative approach to database management, leveraging the robust storage capabilities of <a href="https://aws.amazon.com/s3">S3</a> and [MinIO](https://min.io) to store and retrieve data. PomDB is entirely client-driven and enforces an opinionated structure for consistency, compatibility, and speed :fire:
   </p>
 </div>
 
@@ -20,7 +20,8 @@
 - S3-backed [durability]() and [consistency]()
 - [Pessimistic]() and [optimistic]() concurrency control
 - Real-time [change data capture]() via S3 events
-- Schema [migration]() and [validation]()
+- [Indexes]() for fast and efficient querying
+
 
 ## Installation
 
@@ -41,8 +42,8 @@ import (
 
 type User struct {
   pomdb.Model
-  FullName string `json:"full_name" validate:"required"`
-  Email    string `json:"email" validate:"required,email" pomdb:"index,unique"`
+  FullName string `json:"full_name" pomdb:"index"`
+  Email    string `json:"email" pomdb:"index,unique"`
 }
 
 var client = pomdb.Client{
@@ -156,18 +157,6 @@ type User struct {
 }
 
 //...
-```
-
-### Field Validation
-
-PomDB will validate the model before storing it in the database. PomDB uses [go-playground/validator](https://github.com/go-playground/validator) for validation, and supports all of the tags defined by that package:
-
-```go
-type User struct {
-  pomdb.Model
-  FullName string `json:"full_name" validate:"required" pomdb:"index"`
-  Email    string `json:"email" validate:"required,email" pomdb:"index,unique"`
-}
 ```
 
 ## Working with Objects
