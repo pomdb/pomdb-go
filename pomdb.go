@@ -91,6 +91,11 @@ func (c *Client) CreateIndexItems(cache *ModelCache) error {
 		// Encode the index field value in base64
 		code := base64.StdEncoding.EncodeToString([]byte(index.CurrentValue))
 
+		// If the encoded value is bigger than 1024 bytes, return an error
+		if len(code) > 1024 {
+			return fmt.Errorf("CreateIndexItem: index %s with value %s is too big", index.FieldName, index.CurrentValue)
+		}
+
 		// Create the key path for the index item
 		key := cache.Collection + "/indexes/" + index.FieldName + "/" + code
 
