@@ -6,7 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"strings"
+	"log"
+	"reflect"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -30,82 +31,68 @@ func (c *Client) FindMany(q Query) ([]interface{}, error) {
 	// Build the struct cache
 	ca := NewModelCache(rv)
 
-	// Get the collection
-	co := ca.Collection
+	// Set index pfx path
+	pfx := ca.Collection + "/indexes/" + q.FieldName + "/"
 
-	// Set index key path
-	key := co + "/indexes/" + q.FieldName + "/"
-
-	// Get a list of all the objects in the index
+	// Fetch the list of objects
 	lst := &s3.ListObjectsV2Input{
 		Bucket: &c.Bucket,
-		Prefix: &key,
+		Prefix: &pfx,
 	}
 
 	// Fetch the list of objects
-	var keys []map[string]string
-	p := s3.NewListObjectsV2Paginator(c.Service, lst)
-	for p.HasMorePages() {
-		page, err := p.NextPage(context.TODO())
+	var idxs []map[string]string
+	pgr := s3.NewListObjectsV2Paginator(c.Service, lst)
+	for pgr.HasMorePages() {
+		page, err := pgr.NextPage(context.TODO())
 		if err != nil {
 			return nil, err
 		}
 		for _, obj := range page.Contents {
-			okey := *obj.Key
-			name, err := base64.StdEncoding.DecodeString(okey[len(key):])
+			key := *obj.Key
+			name, err := base64.StdEncoding.DecodeString(key[len(pfx):])
 			if err != nil {
 				return nil, err
 			}
-			keys = append(keys, map[string]string{
-				"key":   okey,
+			idxs = append(idxs, map[string]string{
+				"key":   key,
 				"value": string(name),
 			})
 		}
 	}
 
 	// Find the matches
-	var matches []map[string]string
-	for _, k := range keys {
-		switch q.Filter {
-		case QueryFilterContains:
-			if strings.Contains(k["value"], q.FieldValue) {
-				matches = append(matches, k)
-			}
-		case QueryFilterEquals:
-			if k["value"] == q.FieldValue {
-				matches = append(matches, k)
-			}
-		case QueryFilterStartsWith:
-			if strings.HasPrefix(k["value"], q.FieldValue) {
-				matches = append(matches, k)
-			}
-		case QueryFilterEndsWith:
-			if strings.HasSuffix(k["value"], q.FieldValue) {
-				matches = append(matches, k)
-			}
-		case QueryFilterGreaterThan:
-			if k["value"] > q.FieldValue {
-				matches = append(matches, k)
-			}
-		case QueryFilterLessThan:
-			if k["value"] < q.FieldValue {
-				matches = append(matches, k)
-			}
-		default:
-			return nil, fmt.Errorf("FindMany: invalid filter")
-		}
+	err = q.FilterMatches(idxs)
+	if err != nil {
+		return nil, err
 	}
 
-	if len(matches) == 0 {
+	if len(q.Matches) == 0 {
+		log.Println("no matches")
 		return []interface{}{}, nil
 	}
 
-	// Fetch the records
-	var objs []interface{}
-	for _, m := range matches {
+	// Fetch the documents
+	var docs []interface{}
+	for _, m := range q.Matches {
 		get := &s3.GetObjectInput{
 			Bucket: &c.Bucket,
 			Key:    aws.String(m["key"]),
+		}
+
+		idx, err := c.Service.GetObject(context.TODO(), get)
+		if err != nil {
+			return nil, err
+		}
+
+		bdy, err := io.ReadAll(idx.Body)
+		if err != nil {
+			return nil, err
+		}
+
+		get = &s3.GetObjectInput{
+			Bucket: &c.Bucket,
+			Key:    aws.String(ca.Collection + "/" + string(bdy)),
 		}
 
 		rec, err := c.Service.GetObject(context.TODO(), get)
@@ -113,31 +100,15 @@ func (c *Client) FindMany(q Query) ([]interface{}, error) {
 			return nil, err
 		}
 
-		bdy, err := io.ReadAll(rec.Body)
+		elem := reflect.TypeOf(q.Model).Elem()
+		model := reflect.New(elem).Interface()
+		err = json.NewDecoder(rec.Body).Decode(&model)
 		if err != nil {
 			return nil, err
 		}
 
-		id := string(bdy)
-
-		key = co + "/" + id
-
-		get = &s3.GetObjectInput{
-			Bucket: &c.Bucket,
-			Key:    &key,
-		}
-
-		rec, err = c.Service.GetObject(context.TODO(), get)
-		if err != nil {
-			return nil, err
-		}
-
-		if err = json.NewDecoder(rec.Body).Decode(&q.Model); err != nil {
-			return nil, err
-		}
-
-		objs = append(objs, q.Model)
+		docs = append(docs, model)
 	}
 
-	return objs, nil
+	return docs, nil
 }

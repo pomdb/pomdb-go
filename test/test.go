@@ -83,7 +83,6 @@ func main() {
 
 	var docs []*User
 	for _, obj := range res {
-		log.Printf("obj: %v", obj)
 		doc := obj.(*User)
 		docs = append(docs, doc)
 	}

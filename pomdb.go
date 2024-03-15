@@ -52,14 +52,14 @@ func (c *Client) CheckBucket() error {
 }
 
 // CheckIndexExists checks if an index item exists in the given collection.
-func (c *Client) CheckIndexExists(cache *ModelCache) error {
-	for _, index := range cache.IndexFields {
+func (c *Client) CheckIndexExists(ca *ModelCache) error {
+	for _, index := range ca.IndexFields {
 		if index.IsUnique {
 			// Encode the index field value in base64
 			code := base64.StdEncoding.EncodeToString([]byte(index.CurrentValue))
 
 			// Create the key path for the index item
-			key := cache.Collection + "/indexes/" + index.FieldName + "/" + code
+			key := ca.Collection + "/indexes/" + index.FieldName + "/" + code
 
 			head := &s3.HeadObjectInput{
 				Bucket: &c.Bucket,
@@ -82,11 +82,11 @@ func (c *Client) CheckIndexExists(cache *ModelCache) error {
 }
 
 // CreateIndexItems creates an index item in the given collection.
-func (c *Client) CreateIndexItems(cache *ModelCache) error {
-	id := cache.ModelID.Interface().(ObjectID).String()
+func (c *Client) CreateIndexItems(ca *ModelCache) error {
+	id := ca.ModelID.Interface().(ObjectID).String()
 
-	for _, index := range cache.IndexFields {
-		log.Printf("CreateIndexItem: collection=%s, indexField=%v", cache.Collection, index)
+	for _, index := range ca.IndexFields {
+		log.Printf("CreateIndexItem: collection=%s, indexField=%v", ca.Collection, index)
 
 		// Encode the index field value in base64
 		code := base64.StdEncoding.EncodeToString([]byte(index.CurrentValue))
@@ -97,7 +97,7 @@ func (c *Client) CreateIndexItems(cache *ModelCache) error {
 		}
 
 		// Create the key path for the index item
-		key := cache.Collection + "/indexes/" + index.FieldName + "/" + code
+		key := ca.Collection + "/indexes/" + index.FieldName + "/" + code
 
 		put := &s3.PutObjectInput{
 			Bucket: &c.Bucket,
@@ -114,18 +114,18 @@ func (c *Client) CreateIndexItems(cache *ModelCache) error {
 }
 
 // UpdateIndexItems updates index items in the given collection.
-func (c *Client) UpdateIndexItems(cache *ModelCache) error {
-	id := cache.ModelID.Interface().(ObjectID).String()
+func (c *Client) UpdateIndexItems(ca *ModelCache) error {
+	id := ca.ModelID.Interface().(ObjectID).String()
 
-	for _, index := range cache.IndexFields {
+	for _, index := range ca.IndexFields {
 		if index.PreviousValue != "" {
-			log.Printf("UpdateIndexItem: collection=%s, indexField=%v", cache.Collection, index)
+			log.Printf("UpdateIndexItem: collection=%s, indexField=%v", ca.Collection, index)
 
 			// Encode the index field value in base64
 			code := base64.StdEncoding.EncodeToString([]byte(index.PreviousValue))
 
 			// Create the key path for the old index item
-			oldKey := cache.Collection + "/indexes/" + index.FieldName + "/" + code
+			oldKey := ca.Collection + "/indexes/" + index.FieldName + "/" + code
 
 			// Delete the old index item
 			del := &s3.DeleteObjectInput{
@@ -141,7 +141,7 @@ func (c *Client) UpdateIndexItems(cache *ModelCache) error {
 			code = base64.StdEncoding.EncodeToString([]byte(index.CurrentValue))
 
 			// Create the key path for the new index item
-			newKey := cache.Collection + "/indexes/" + index.FieldName + "/" + code
+			newKey := ca.Collection + "/indexes/" + index.FieldName + "/" + code
 
 			put := &s3.PutObjectInput{
 				Bucket: &c.Bucket,
@@ -159,15 +159,15 @@ func (c *Client) UpdateIndexItems(cache *ModelCache) error {
 }
 
 // DeleteIndexItems deletes index items in the given collection.
-func (c *Client) DeleteIndexItems(cache *ModelCache) error {
-	for _, index := range cache.IndexFields {
-		log.Printf("DeleteIndexItem: collection=%s, indexField=%v", cache.Collection, index)
+func (c *Client) DeleteIndexItems(ca *ModelCache) error {
+	for _, index := range ca.IndexFields {
+		log.Printf("DeleteIndexItem: collection=%s, indexField=%v", ca.Collection, index)
 
 		// Encode the index field value in base64
 		code := base64.StdEncoding.EncodeToString([]byte(index.CurrentValue))
 
 		// Create the key path for the index item
-		key := cache.Collection + "/indexes/" + index.FieldName + "/" + code
+		key := ca.Collection + "/indexes/" + index.FieldName + "/" + code
 
 		del := &s3.DeleteObjectInput{
 			Bucket: &c.Bucket,

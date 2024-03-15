@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"reflect"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
@@ -80,10 +81,12 @@ func (c *Client) FindOne(q Query) (interface{}, error) {
 		}
 	}
 
-	// Unmarshal the record
-	if err := json.NewDecoder(rec.Body).Decode(&q.Model); err != nil {
+	elem := reflect.TypeOf(q.Model).Elem()
+	model := reflect.New(elem).Interface()
+	err = json.NewDecoder(rec.Body).Decode(&model)
+	if err != nil {
 		return nil, err
 	}
 
-	return q.Model, nil
+	return model, nil
 }
