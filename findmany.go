@@ -97,7 +97,7 @@ func (c *Client) FindMany(q Query) ([]interface{}, error) {
 	}
 
 	if len(matches) == 0 {
-		return nil, fmt.Errorf("FindMany: no matches found")
+		return []interface{}{}, nil
 	}
 
 	// Fetch the records
