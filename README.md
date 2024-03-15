@@ -21,7 +21,7 @@
 - [Pessimistic]() and [optimistic]() concurrency control
 - Real-time [change data capture]() via S3 events
 - [Indexes]() for fast and efficient querying
-
+- Have a feature request? [Let us know]()
 
 ## Installation
 
