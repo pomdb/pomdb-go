@@ -236,12 +236,13 @@ user := obj.(*User)
 
 ```go
 query := pomdb.Query{
+  Model: User{},
   Field: "name",
   Value: "Doe",
   Flags: pomdb.QueryFlagContains,
 }
 
-objs, err := client.FindMany("users", query)
+objs, err := client.FindMany(query)
 if err != nil {
   log.Fatal(err)
 }

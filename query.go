@@ -1,12 +1,17 @@
 package pomdb
 
 type Query struct {
-	Model interface{}
-	Field string
-	Value string
-	Flags []string
+	Model      interface{}
+	FieldName  string
+	FieldValue string
+	Filter     QueryFilter
 }
 
-type QueryFlag string
+type QueryFilter string
 
-const QueryFlagContains QueryFlag = "contains"
+const QueryFilterContains QueryFilter = "contains"
+const QueryFilterEquals QueryFilter = "equals"
+const QueryFilterStartsWith QueryFilter = "startsWith"
+const QueryFilterEndsWith QueryFilter = "endsWith"
+const QueryFilterGreaterThan QueryFilter = "greaterThan"
+const QueryFilterLessThan QueryFilter = "lessThan"

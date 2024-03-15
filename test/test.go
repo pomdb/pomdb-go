@@ -54,18 +54,39 @@ func main() {
 
 	// log.Printf("deleted data for ID: %s", *del)
 
+	// query := pomdb.Query{
+	// 	Model: &User{},
+	// 	Field: "email",
+	// 	Value: "jane.pip@zip.com",
+	// }
+
+	// obj, err := client.FindOne(query)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	// doc := obj.(*User)
+
+	// log.Printf("FindOne: found user %s with ID %s", doc.FullName, doc.ID)
+
 	query := pomdb.Query{
-		Model: &User{},
-		Field: "email",
-		Value: "jane.pip@zip.com",
+		Model:      &User{},
+		FieldName:  "full_name",
+		FieldValue: "Doe",
+		Filter:     pomdb.QueryFilterContains,
 	}
 
-	obj, err := client.FindOne(query)
+	res, err := client.FindMany(query)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	doc := obj.(*User)
+	var docs []*User
+	for _, obj := range res {
+		log.Printf("obj: %v", obj)
+		doc := obj.(*User)
+		docs = append(docs, doc)
+	}
 
-	log.Printf("FindOne: found user %s with ID %s", doc.FullName, doc.ID)
+	log.Printf("FindMany: found %d users", len(docs))
 }

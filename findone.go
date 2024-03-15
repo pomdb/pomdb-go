@@ -17,7 +17,7 @@ func (c *Client) FindOne(q Query) (interface{}, error) {
 	var noSuchKey *types.NoSuchKey
 
 	target := "record"
-	if q.Field != "id" {
+	if q.FieldName != "id" {
 		target = "index"
 	}
 
@@ -34,13 +34,13 @@ func (c *Client) FindOne(q Query) (interface{}, error) {
 	co := ca.Collection
 
 	// Set record key path
-	key := co + "/" + q.Value
+	key := co + "/" + q.FieldValue
 
 	if target == "index" {
 		// Encode index value
-		code := base64.StdEncoding.EncodeToString([]byte(q.Value))
+		code := base64.StdEncoding.EncodeToString([]byte(q.FieldValue))
 		// Set index key path
-		key = co + "/indexes/" + q.Field + "/" + code
+		key = co + "/indexes/" + q.FieldName + "/" + code
 	}
 
 	get := &s3.GetObjectInput{
@@ -51,7 +51,7 @@ func (c *Client) FindOne(q Query) (interface{}, error) {
 	// Fetch the record
 	rec, err := c.Service.GetObject(context.TODO(), get)
 	if err != nil && errors.As(err, &noSuchKey) {
-		return nil, fmt.Errorf("FindOne: %s not found: collection=%s, field=%s, value=%s", target, co, q.Field, q.Value)
+		return nil, fmt.Errorf("FindOne: %s not found: collection=%s, field=%s, value=%s", target, co, q.FieldName, q.FieldValue)
 	} else if err != nil {
 		return nil, err
 	}
