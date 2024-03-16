@@ -302,17 +302,65 @@ query := pomdb.Query{
 
 #### `QueryFlagStartsWith`
 
-This filter is used to find objects where the field starts with the specified value.
+This filter is used to find objects where the field starts with the specified value, e.g.:
+
+> **Equivalent to** `SELECT * FROM users WHERE name LIKE 'John%'`
+
+```go
+query := pomdb.Query{
+  Model:      User{},
+  FieldName:  "name",
+  FieldValue: "John",
+  Filter:      pomdb.QueryFlagStartsWith,
+  // ..........^
+}
+```
 
 #### `QueryFlagEndsWith`
 
-This filter is used to find objects where the field ends with the specified value.
+This filter is used to find objects where the field ends with the specified value, e.g.:
+
+> **Equivalent to** `SELECT * FROM users WHERE name LIKE '%Doe'`
+
+```go
+query := pomdb.Query{
+  Model:      User{},
+  FieldName:  "name",
+  FieldValue: "Doe",
+  Filter:      pomdb.QueryFlagEndsWith,
+  // ..........^
+}
+```
 
 #### `QueryFlagGreaterThan`
 
-This filter is used to find objects where the field is greater than the specified value.
+This filter is used to find objects where the field is greater than the specified value, e.g.:
+
+> **Equivalent to** `SELECT * FROM users WHERE age > 21`
+
+```go
+query := pomdb.Query{
+  Model:      User{},
+  FieldName:  "age",
+  FieldValue: 21,
+  Filter:      pomdb.QueryFlagGreaterThan,
+  // ..........^
+}
+```
 
 #### `QueryFlagLessThan`
 
-This filter is used to find objects where the field is less than the specified value.
+This filter is used to find objects where the field is less than the specified value, e.g.:
+
+> **Equivalent to** `SELECT * FROM users WHERE age < 21`
+
+```go
+query := pomdb.Query{
+  Model:      User{},
+  FieldName:  "age",
+  FieldValue: 21,
+  Filter:      pomdb.QueryFlagLessThan,
+  // ..........^
+}
+```
 
