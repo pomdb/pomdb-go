@@ -202,13 +202,13 @@ if err := client.Delete(&user); err != nil {
 
 ### Querying
 
-#### <u>Find One</u>
+#### <ins>Find One</ins>
 
 ```go
 query := pomdb.Query{
-  Model: User{},
-  Field: "email",
-  Value: "jane.doe@bar.com",
+  Model:      User{},
+  FieldName:  "email",
+  FieldValue: "jane.doe@bar.com",
 }
 
 obj, err := client.FindOne(query)
@@ -221,14 +221,14 @@ user := obj.(*User)
 // ...
 ```
 
-#### <u>Find Many</u>
+#### <ins>Find Many</ins>
 
 ```go
 query := pomdb.Query{
-  Model: User{},
-  Field: "name",
-  Value: "Doe",
-  Flags: pomdb.QueryFlagContains,
+  Model:      User{},
+  FieldName:  "name",
+  FieldValue: "Doe",
+  Filter:      pomdb.QueryFlagContains,
 }
 
 objs, err := client.FindMany(query)
@@ -241,7 +241,7 @@ users := objs.([]User)
 // ...
 ```
 
-#### <u>Find All</u>
+#### <ins>Find All</ins>
 
 ```go
 objs, err := client.FindAll("users")
@@ -265,3 +265,54 @@ Indexes are used to optimize queries. PomDB supports unique and non-unique index
 ### Encoding strategy
 
 PomDB uses base64 encoding to store index values. This allows for a consistent and predictable way to store and retrieve objects, and ensures that the index keys are valid S3 object keys. The length of the index key is limited to 1024 bytes. If the encoded index key exceeds this limit, PomDB will return an error.
+
+### Query filters
+
+#### `QueryFlagEquals`
+
+This is the default filter, and is used to find objects where the field is equal to the specified value, e.g.:
+
+> **Equivalent to** `SELECT * FROM users WHERE email = 'john.pip@zip.com'`
+
+```go
+query := pomdb.Query{
+  Model:      User{},
+  FieldName:  "email",
+  FieldValue: "john.pip@zip.com",
+  Filter:      pomdb.QueryFlagEquals,
+  // ..........^
+}
+```
+
+#### `QueryFlagContains`
+
+This filter is used to find objects where the field contains the specified value, e.g.:
+
+> **Equivalent to** `SELECT * FROM users WHERE name LIKE '%Doe%'`
+
+```go
+query := pomdb.Query{
+  Model:      User{},
+  FieldName:  "name",
+  FieldValue: "Doe",
+  Filter:      pomdb.QueryFlagContains,
+  // ..........^
+}
+```
+
+#### `QueryFlagStartsWith`
+
+This filter is used to find objects where the field starts with the specified value.
+
+#### `QueryFlagEndsWith`
+
+This filter is used to find objects where the field ends with the specified value.
+
+#### `QueryFlagGreaterThan`
+
+This filter is used to find objects where the field is greater than the specified value.
+
+#### `QueryFlagLessThan`
+
+This filter is used to find objects where the field is less than the specified value.
+
