@@ -96,7 +96,7 @@ func main() {
 
 ## Creating a Model
 
-Models are used to manage the structure of collections. Models are defined using structs, with `json` tags to serialize the data.
+Models are used to manage the structure of objects stored in collections. Models are defined using structs, with `json` tags to serialize the data.
 
 ```go
 type User struct {
@@ -108,13 +108,13 @@ type User struct {
 //...
 ```
 
-### Object Conventions
+### Marshalling strategy
 
 PomDB will convert the model name to snake case and pluralize it for the collection name. For example, the `User` model will be stored in the `users` collection. Fields are serialized using the `json` tag, and must be exported.
 
 ### Object Identifiers
 
-PomDB automatically generates an ObjectID for each object stored in the database. IDs are stored in the `ID` field of the object in `pomdb.ObjectID` format. Models must embed the `pomdb.Model` struct, or define an `ID` field of type `pomdb.ObjectID`:
+PomDB automatically generates a Universally Unique Lexicographically Sortable Identifer ([ULID](https://github.com/ulid/spec?tab=readme-ov-file)) for each object stored in the database. IDs are stored in the `ID` field of the struct, and serialized to the `id` attribute in the json output. Models must embed the `pomdb.Model` struct, or define an `ID` field of type `pomdb.ULID`:
 
 ```go
 type User struct {
@@ -126,9 +126,9 @@ type User struct {
 // OR
 
 type User struct {
-  ID       pomdb.ObjectID `json:"id" pomdb:"id"`
-  FullName string         `json:"full_name" pomdb:"index"`
-  Email    string         `json:"email" pomdb:"index,unique"`
+  ID       pomdb.ULID `json:"id" pomdb:"id"`
+  FullName string     `json:"full_name" pomdb:"index"`
+  Email    string     `json:"email" pomdb:"index,unique"`
 }
 
 //...
@@ -148,7 +148,7 @@ type User struct {
 // OR
 
 type User struct {
-  ID        pomdb.ObjectID  `json:"id" pomdb:"id"`
+  ID        pomdb.ULID      `json:"id" pomdb:"id"`
   FullName  string          `json:"full_name" pomdb:"index"`
   Email     string          `json:"email" pomdb:"index,unique"`
   CreatedAt pomdb.Timestamp `json:"created_at" pomdb:"created_at"`
