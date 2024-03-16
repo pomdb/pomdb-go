@@ -57,8 +57,8 @@ func main() {
   }
 
   user := User{
-    FullName: "John Doe",
-    Email:    "john.doe@foo.com",
+    FullName: "John Pip",
+    Email:    "john.pip@zip.com",
   }
 
   if res, err := client.Create(&user); err != nil {
@@ -177,8 +177,8 @@ This method is used to create a new object in the database. The object must be a
 
 ```go
 user := User{
-  Name:  "John Doe",
-  Email: "john.doe@foo.com",
+  Name:  "John Pip",
+  Email: "john.pip@zip.com",
 }
 
 if err := client.Create(&user); err != nil {
@@ -192,10 +192,10 @@ if err := client.Create(&user); err != nil {
 
 This method is used to update an existing object in the database. The object must be a pointer to a struct that embeds the `pomdb.Model` struct, or defines an `ID` field of type `pomdb.ULID`, e.g.:
 
-> **Equivalent to** `UPDATE users SET email = 'jane.doe@zip.com' WHERE id = '...'`
+> **Equivalent to** `UPDATE users SET email = 'jane.pip@zip.com' WHERE id = '...'`
 
 ```go
-user.Email = "jane.doe@bar.com"
+user.Email = "jane.pip@zip.com"
 
 if err := client.Update(&user); err != nil {
   log.Fatal(err)
@@ -218,13 +218,13 @@ if err := client.Delete(&user); err != nil {
 
 This method is used to find a single object in the database using an index. The query must include the model, field name, and field value, e.g.:
 
-> **Equivalent to** `SELECT * FROM users WHERE email = 'jane.doe@zip.com'`
+> **Equivalent to** `SELECT * FROM users WHERE email = 'jane.pip@zip.com'`
 
 ```go
 query := pomdb.Query{
   Model:      User{},
   FieldName:  "email",
-  FieldValue: "jane.doe@bar.com",
+  FieldValue: "jane.pip@zip.com",
 }
 
 obj, err := client.FindOne(query)
@@ -312,13 +312,13 @@ query := pomdb.Query{
 
 This filter is used to find objects where the field contains the specified value, e.g.:
 
-> **Equivalent to** `SELECT * FROM users WHERE name LIKE '%Doe%'`
+> **Equivalent to** `SELECT * FROM users WHERE name LIKE '%Pip%'`
 
 ```go
 query := pomdb.Query{
   Model:      User{},
   FieldName:  "name",
-  FieldValue: "Doe",
+  FieldValue: "Pip",
   Filter:      pomdb.QueryFlagContains,
   // ..........^
 }
@@ -344,13 +344,13 @@ query := pomdb.Query{
 
 This filter is used to find objects where the field ends with the specified value, e.g.:
 
-> **Equivalent to** `SELECT * FROM users WHERE name LIKE '%Doe'`
+> **Equivalent to** `SELECT * FROM users WHERE name LIKE '%Pip'`
 
 ```go
 query := pomdb.Query{
   Model:      User{},
   FieldName:  "name",
-  FieldValue: "Doe",
+  FieldValue: "Pip",
   Filter:      pomdb.QueryFlagEndsWith,
   // ..........^
 }
