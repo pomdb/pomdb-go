@@ -108,10 +108,6 @@ type User struct {
 //...
 ```
 
-### Marshalling strategy
-
-PomDB will convert the model name to snake case and pluralize it for the collection name. For example, the `User` model will be stored in the `users` collection. Fields are serialized using the `json` tag, and must be exported.
-
 ### Object Identifiers
 
 PomDB automatically generates a Universally Unique Lexicographically Sortable Identifer ([ULID](https://github.com/ulid/spec?tab=readme-ov-file)) for each object stored in the database. IDs are stored in the `ID` field of the struct, and serialized to the `id` attribute in the json output. Models must embed the `pomdb.Model` struct, or define an `ID` field of type `pomdb.ULID`:
@@ -167,7 +163,13 @@ Objects are stored in collections, and represent a single record in the database
 <bucket>/<collection_name>/<object_id>
 ```
 
-### Creating
+### Marshalling strategy
+
+PomDB will convert the model name to snake case and pluralize it for the collection name. For example, the `User` model will be stored in the `users` collection. Fields are serialized using the `json` tag, and must be exported. Fields that are not exported will be ignored.
+
+### Query methods
+
+#### `Create`
 
 ```go
 user := User{
@@ -182,7 +184,7 @@ if err := client.Create(&user); err != nil {
 // ...
 ```
 
-### Updating
+#### `Update`
 
 ```go
 user.Email = "jane.doe@bar.com"
@@ -192,7 +194,7 @@ if err := client.Update(&user); err != nil {
 }
 ```
 
-### Deleting
+#### `Delete`
 
 ```go
 if err := client.Delete(&user); err != nil {
@@ -200,9 +202,7 @@ if err := client.Delete(&user); err != nil {
 }
 ```
 
-### Querying
-
-#### <ins>Find One</ins>
+#### `FindOne`
 
 ```go
 query := pomdb.Query{
@@ -221,7 +221,7 @@ user := obj.(*User)
 // ...
 ```
 
-#### <ins>Find Many</ins>
+#### `FindMany`
 
 ```go
 query := pomdb.Query{
@@ -241,7 +241,7 @@ users := objs.([]User)
 // ...
 ```
 
-#### <ins>Find All</ins>
+#### `FindAll`
 
 ```go
 objs, err := client.FindAll("users")
