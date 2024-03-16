@@ -171,6 +171,10 @@ PomDB will convert the model name to snake case and pluralize it for the collect
 
 #### `Create`
 
+This method is used to create a new object in the database. The object must be a pointer to a struct that embeds the `pomdb.Model` struct, or defines an `ID` field of type `pomdb.ULID`, e.g.:
+
+> **Equivalent to** `INSERT INTO users (id, full_name, email) VALUES (...)`
+
 ```go
 user := User{
   Name:  "John Doe",
@@ -186,6 +190,10 @@ if err := client.Create(&user); err != nil {
 
 #### `Update`
 
+This method is used to update an existing object in the database. The object must be a pointer to a struct that embeds the `pomdb.Model` struct, or defines an `ID` field of type `pomdb.ULID`, e.g.:
+
+> **Equivalent to** `UPDATE users SET email = 'jane.doe@zip.com' WHERE id = '...'`
+
 ```go
 user.Email = "jane.doe@bar.com"
 
@@ -196,6 +204,10 @@ if err := client.Update(&user); err != nil {
 
 #### `Delete`
 
+This method is used to delete an existing object in the database. The object must be a pointer to a struct that embeds the `pomdb.Model` struct, or defines an `ID` field of type `pomdb.ULID`, e.g.:
+
+> **Equivalent to** `DELETE FROM users WHERE id = '...'`
+
 ```go
 if err := client.Delete(&user); err != nil {
   log.Fatal(err)
@@ -203,6 +215,10 @@ if err := client.Delete(&user); err != nil {
 ```
 
 #### `FindOne`
+
+This method is used to find a single object in the database using an index. The query must include the model, field name, and field value, e.g.:
+
+> **Equivalent to** `SELECT * FROM users WHERE email = 'jane.doe@zip.com'`
 
 ```go
 query := pomdb.Query{
@@ -223,6 +239,10 @@ user := obj.(*User)
 
 #### `FindMany`
 
+This method is used to find multiple objects in the database using an index. The query must include the model, field name, field value, and filter, e.g.:
+
+> **Equivalent to** `SELECT * FROM users WHERE name LIKE '%Doe%'`
+
 ```go
 query := pomdb.Query{
   Model:      User{},
@@ -242,6 +262,10 @@ users := objs.([]User)
 ```
 
 #### `FindAll`
+
+This method is used to find all objects in the database. The model must be included in the query, e.g.:
+
+> **Equivalent to** `SELECT * FROM users`
 
 ```go
 objs, err := client.FindAll("users")
