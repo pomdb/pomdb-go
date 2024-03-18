@@ -96,63 +96,85 @@ func main() {
 
 ## Creating a Model
 
-Models are used to manage the structure of objects stored in collections. Models are defined using structs, with `json` tags to serialize the data.
+Models are used to manage the structure of objects stored in collections. Models are defined using structs, with `json` tags to serialize the data. When embedding the `pomdb.Model` struct, its fields are automatically added to your model. You can choose to omit these fields, or define them manually. If you choose to define them manually, they must use the same names, types, and tags as the fields defined by PomDB:
 
-```go
-type User struct {
-  pomdb.Model
-  FullName string `json:"full_name" pomdb:"index"`
-  Email    string `json:"email" pomdb:"index,unique"`
-}
-
-//...
-```
-
-### Object Identifiers
-
-PomDB automatically generates a Universally Unique Lexicographically Sortable Identifer ([ULID](https://github.com/ulid/spec?tab=readme-ov-file)) for each object stored in the database. IDs are stored in the `ID` field of the struct, and serialized to the `id` attribute in the json output. Models must embed the `pomdb.Model` struct, or define an `ID` field of type `pomdb.ULID`:
-
-```go
-type User struct {
-  pomdb.Model
-  FullName string `json:"full_name" pomdb:"index"`
-  Email    string `json:"email" pomdb:"index,unique"`
-}
-
-// OR
-
-type User struct {
-  ID       pomdb.ULID `json:"id" pomdb:"id"`
-  FullName string     `json:"full_name" pomdb:"index"`
-  Email    string     `json:"email" pomdb:"index,unique"`
-}
-
-//...
-```
-
-### Object Timestamps
-
-When embedding the `pomdb.Model` struct, its fields are automatically added to your model. You can choose to omit these fields, or define them manually. If you choose to define them manually, they must use the same names, types, and tags as the fields defined by PomDB:
-
+> embedding `pomdb.Model`
 ```go
 type User struct {
   pomdb.Model
   FullName  string `json:"full_name" pomdb:"index"`
   Email     string `json:"email" pomdb:"index,unique"`
 }
+```
 
-// OR
-
+> defining fields manually
+```go
 type User struct {
   ID        pomdb.ULID      `json:"id" pomdb:"id"`
-  FullName  string          `json:"full_name" pomdb:"index"`
-  Email     string          `json:"email" pomdb:"index,unique"`
   CreatedAt pomdb.Timestamp `json:"created_at" pomdb:"created_at"`
   UpdatedAt pomdb.Timestamp `json:"updated_at" pomdb:"updated_at"`
   DeletedAt pomdb.Timestamp `json:"deleted_at" pomdb:"deleted_at"`
+  FullName  string          `json:"full_name" pomdb:"index"`
+  Email     string          `json:"email" pomdb:"index,unique"`
 }
+```
 
-//...
+### Object Identifiers
+
+PomDB automatically generates a Universally Unique Lexicographically Sortable Identifer ([ULID](https://github.com/ulid/spec?tab=readme-ov-file)) for each object stored in the database. IDs are stored in the `ID` field of the struct, and serialized to the `id` attribute in the json output. Models must embed the `pomdb.Model` struct, or define an `ID` field of type `pomdb.ULID`:
+
+> embedding `pomdb.Model`
+```go
+type User struct {
+  pomdb.Model
+  FullName string `json:"full_name" pomdb:"index"`
+  Email    string `json:"email" pomdb:"index,unique"`
+}
+```
+
+> defined with `pomdb.ULID`
+```go
+type User struct {
+  ID       pomdb.ULID `json:"id" pomdb:"id"`
+  FullName string     `json:"full_name" pomdb:"index"`
+  Email    string     `json:"email" pomdb:"index,unique"`
+  //...
+}
+```
+
+> both cases serialize to:
+```json
+{
+  "id": "01HS8Q7MVGA8CVCVVFYEH1VY2T",
+  "full_name": "John Pip",
+  "email": "john.pip@zip.com"
+  //...
+}
+```
+
+### Object Timestamps
+
+PomDB timestamps are used to track when objects are created, updated, and deleted. Timestamps are provided by `pomdb.Model` as `CreatedAt`, `UpdatedAt`, and `DeletedAt` fields in `time.Time` format, and serialized to `created_at`, `updated_at`, and `deleted_at` attributes in Unix seconds format:
+
+> embedding `pomdb.Model`
+```go
+type User struct {
+  pomdb.Model
+  FullName  string `json:"full_name" pomdb:"index"`
+  Email     string `json:"email" pomdb:"index,unique"`
+}
+```
+
+> timestamps serialize to:
+```go
+{
+  "id": "01HS8Q7MVGA8CVCVVFYEH1VY2T",
+  "full_name": "John Pip",
+  "email": "john.pip@zip.com",
+  "created_at": 1630000000,
+  "updated_at": 1630000000,
+  "deleted_at": 0
+}
 ```
 
 ## Working with Objects
