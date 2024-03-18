@@ -196,7 +196,7 @@ type User struct {
 
 PomDB automatically sets the `CreatedAt` and `UpdatedAt` fields when an object is created or updated.
 
-##### <ins>**Soft-deleting objects**</ins>
+#### Soft-deleting objects
 
 PomDB supports soft-deleting objects, and automatically sets the `DeletedAt` field to the current time when an object is deleted. The `DeletedAt` field is used to soft-delete objects, and is automatically set to `0` when an object is undeleted. Soft-deleted objects are not returned in queries, and are not included in the `FindAll` method. Soft-deletes are enabled by default, and can be disabled by setting the `SoftDeletes` field of the client to `false`:
 
