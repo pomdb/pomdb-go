@@ -61,7 +61,8 @@ func main() {
     Email:    "john.pip@zip.com",
   }
 
-  if res, err := client.Create(&user); err != nil {
+  res, err := client.Create(&user)
+  if err != nil {
     log.Fatal(err)
   }
 
@@ -276,12 +277,12 @@ query := pomdb.Query{
   FieldValue: "jane.pip@zip.com",
 }
 
-obj, err := client.FindOne(query)
+res, err := client.FindOne(query)
 if err != nil {
   log.Fatal(err)
 }
 
-user := obj.(*User)
+user := res.(*User)
 
 // ...
 ```
@@ -300,12 +301,15 @@ query := pomdb.Query{
   Filter:      pomdb.QueryFlagContains,
 }
 
-objs, err := client.FindMany(query)
+res, err := client.FindMany(query)
 if err != nil {
   log.Fatal(err)
 }
 
-users := objs.([]User)
+users := make([]User, len(res.Docs))
+for i, user := range res.Docs {
+  users[i] = user.(User)
+}
 
 // ...
 ```
@@ -321,12 +325,15 @@ query := pomdb.Query{
   Model: User{},
 }
 
-objs, err := client.FindAll(query)
+res, err := client.FindAll(query)
 if err != nil {
   log.Fatal(err)
 }
 
-users := objs.([]User)
+users := make([]User, len(res.Docs))
+for i, user := range res.Docs {
+  users[i] = user.(User)
+}
 
 // ...
 ```

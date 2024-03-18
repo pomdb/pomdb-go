@@ -81,11 +81,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	var docs []*User
-	for _, obj := range res.Docs {
-		doc := obj.(*User)
-		docs = append(docs, doc)
+	users := make([]User, len(res.Docs))
+	for i, user := range res.Docs {
+		users[i] = user.(User)
 	}
 
-	log.Printf("FindMany: found %d users", len(docs))
+	log.Printf("FindMany: found %d users", len(users))
 }
