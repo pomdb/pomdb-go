@@ -147,8 +147,10 @@ type User struct {
 {
   "id": "01HS8Q7MVGA8CVCVVFYEH1VY2T",
   "full_name": "John Pip",
-  "email": "john.pip@zip.com"
-  //...
+  "email": "john.pip@zip.com",
+  "created_at": 1630000000,
+  "updated_at": 1630000000,
+  "deleted_at": 0
 }
 ```
 
