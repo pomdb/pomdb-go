@@ -132,7 +132,7 @@ type User struct {
 }
 ```
 
-> defined with `pomdb.ULID`
+> defining with `pomdb.ULID`
 ```go
 type User struct {
   ID       pomdb.ULID `json:"id" pomdb:"id"`
