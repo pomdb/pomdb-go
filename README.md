@@ -142,7 +142,7 @@ type User struct {
 }
 ```
 
-> output:
+> model serializes to:
 ```json
 {
   "id": "01HS8Q7MVGA8CVCVVFYEH1VY2T",
@@ -167,8 +167,8 @@ type User struct {
 }
 ```
 
-> timestamps serialize to:
-```go
+> model serializes to:
+```json
 {
   "id": "01HS8Q7MVGA8CVCVVFYEH1VY2T",
   "full_name": "John Pip",
