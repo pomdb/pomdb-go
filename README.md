@@ -317,7 +317,11 @@ This method is used to find all objects in the database. The model must be inclu
 > **Equivalent to** `SELECT * FROM users`
 
 ```go
-objs, err := client.FindAll("users")
+query := pomdb.Query{
+  Model: User{},
+}
+
+objs, err := client.FindAll(query)
 if err != nil {
   log.Fatal(err)
 }
