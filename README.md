@@ -142,7 +142,7 @@ type User struct {
 }
 ```
 
-> model serializes to:
+> serializes to:
 ```json
 {
   "id": "01HS8Q7MVGA8CVCVVFYEH1VY2T",
@@ -167,7 +167,7 @@ type User struct {
 }
 ```
 
-> model serializes to:
+> serializes to:
 ```json
 {
   "id": "01HS8Q7MVGA8CVCVVFYEH1VY2T",
