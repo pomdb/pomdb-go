@@ -13,13 +13,30 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
-func (c *Client) FindMany(q Query) ([]interface{}, error) {
-	if q.FieldName == "id" {
+type FindManyResult struct {
+	Docs   []interface{}
+	Cursor string
+}
+
+func (c *Client) FindMany(q Query) (*FindManyResult, error) {
+	if q.Field == "id" {
 		return nil, fmt.Errorf("FindMany: cannot search by id")
 	}
 
+	// Set default filter
 	if q.Filter == "" {
 		q.Filter = QueryFilterEquals
+	}
+
+	// Set default limit
+	if q.Limit == 0 {
+		q.Limit = QueryLimitDefault
+	}
+
+	// Set the page token
+	var token *string
+	if q.Token != "" {
+		token = &q.Token
 	}
 
 	// Dereference q.Model
@@ -32,33 +49,33 @@ func (c *Client) FindMany(q Query) ([]interface{}, error) {
 	ca := NewModelCache(rv)
 
 	// Set index pfx path
-	pfx := ca.Collection + "/indexes/" + q.FieldName + "/"
+	pfx := ca.Collection + "/indexes/" + q.Field + "/"
 
 	// Fetch the list of objects
 	lst := &s3.ListObjectsV2Input{
-		Bucket: &c.Bucket,
-		Prefix: &pfx,
+		Bucket:            &c.Bucket,
+		Prefix:            &pfx,
+		MaxKeys:           &q.Limit,
+		ContinuationToken: token,
 	}
 
-	// Fetch the list of objects
+	// Fetch the first pge of objects
+	pge, err := c.Service.ListObjectsV2(context.TODO(), lst)
+	if err != nil {
+		return nil, err
+	}
+
 	var idxs []map[string]string
-	pgr := s3.NewListObjectsV2Paginator(c.Service, lst)
-	for pgr.HasMorePages() {
-		page, err := pgr.NextPage(context.TODO())
+	for _, obj := range pge.Contents {
+		key := *obj.Key
+		name, err := base64.StdEncoding.DecodeString(key[len(pfx):])
 		if err != nil {
 			return nil, err
 		}
-		for _, obj := range page.Contents {
-			key := *obj.Key
-			name, err := base64.StdEncoding.DecodeString(key[len(pfx):])
-			if err != nil {
-				return nil, err
-			}
-			idxs = append(idxs, map[string]string{
-				"key":   key,
-				"value": string(name),
-			})
-		}
+		idxs = append(idxs, map[string]string{
+			"key":   key,
+			"value": string(name),
+		})
 	}
 
 	// Find the matches
@@ -68,8 +85,8 @@ func (c *Client) FindMany(q Query) ([]interface{}, error) {
 	}
 
 	if len(q.Matches) == 0 {
-		log.Println("no matches")
-		return []interface{}{}, nil
+		log.Println("FindMany: no objects found")
+		return nil, nil
 	}
 
 	// Fetch the documents
@@ -110,5 +127,14 @@ func (c *Client) FindMany(q Query) ([]interface{}, error) {
 		docs = append(docs, model)
 	}
 
-	return docs, nil
+	// Set the next page token
+	var cursor string
+	if pge.NextContinuationToken != nil {
+		cursor = *pge.NextContinuationToken
+	}
+
+	return &FindManyResult{
+		Docs:   docs,
+		Cursor: cursor,
+	}, nil
 }

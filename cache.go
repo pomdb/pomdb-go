@@ -71,8 +71,6 @@ func NewModelCache(rv reflect.Value) *ModelCache {
 		jstag := field.Tag.Get("json")
 
 		if tagContains(pmtag, []string{"unique", "index"}) {
-			log.Printf("model has unique field: %s", jstag)
-
 			mc.IndexFields = append(mc.IndexFields, IndexField{
 				FieldName:    jstag,
 				CurrentValue: value,
@@ -83,8 +81,6 @@ func NewModelCache(rv reflect.Value) *ModelCache {
 		}
 
 		if tagContains(pmtag, []string{"index"}) {
-			log.Printf("model has index field: %s", jstag)
-
 			mc.IndexFields = append(mc.IndexFields, IndexField{
 				FieldName:    jstag,
 				CurrentValue: value,

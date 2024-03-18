@@ -6,47 +6,53 @@ import (
 )
 
 type Query struct {
-	Model      interface{}
-	FieldName  string
-	FieldValue string
-	Matches    []map[string]string
-	Filter     QueryFilter
+	Model   interface{}
+	Field   string
+	Value   string
+	Matches []map[string]string
+	Filter  QueryFilter
+	Limit   int32
+	Token   string
 }
 
 type QueryFilter string
 
-const QueryFilterContains QueryFilter = "contains"
-const QueryFilterEquals QueryFilter = "equals"
-const QueryFilterStartsWith QueryFilter = "startsWith"
-const QueryFilterEndsWith QueryFilter = "endsWith"
-const QueryFilterGreaterThan QueryFilter = "greaterThan"
-const QueryFilterLessThan QueryFilter = "lessThan"
+const (
+	QueryFilterContains    QueryFilter = "contains"
+	QueryFilterEquals      QueryFilter = "equals"
+	QueryFilterStartsWith  QueryFilter = "startsWith"
+	QueryFilterEndsWith    QueryFilter = "endsWith"
+	QueryFilterGreaterThan QueryFilter = "greaterThan"
+	QueryFilterLessThan    QueryFilter = "lessThan"
+	QueryFilterDefault     QueryFilter = QueryFilterEquals
+	QueryLimitDefault      int32       = 100
+)
 
 func (q *Query) FilterMatches(k []map[string]string) error {
 	for _, v := range k {
 		switch q.Filter {
 		case QueryFilterContains:
-			if strings.Contains(v["value"], q.FieldValue) {
+			if strings.Contains(v["value"], q.Value) {
 				q.Matches = append(q.Matches, v)
 			}
 		case QueryFilterEquals:
-			if v["value"] == q.FieldValue {
+			if v["value"] == q.Value {
 				q.Matches = append(q.Matches, v)
 			}
 		case QueryFilterStartsWith:
-			if strings.HasPrefix(v["value"], q.FieldValue) {
+			if strings.HasPrefix(v["value"], q.Value) {
 				q.Matches = append(q.Matches, v)
 			}
 		case QueryFilterEndsWith:
-			if strings.HasSuffix(v["value"], q.FieldValue) {
+			if strings.HasSuffix(v["value"], q.Value) {
 				q.Matches = append(q.Matches, v)
 			}
 		case QueryFilterGreaterThan:
-			if v["value"] > q.FieldValue {
+			if v["value"] > q.Value {
 				q.Matches = append(q.Matches, v)
 			}
 		case QueryFilterLessThan:
-			if v["value"] < q.FieldValue {
+			if v["value"] < q.Value {
 				q.Matches = append(q.Matches, v)
 			}
 		default:

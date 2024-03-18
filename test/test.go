@@ -70,10 +70,10 @@ func main() {
 	// log.Printf("FindOne: found user %s with ID %s", doc.FullName, doc.ID)
 
 	query := pomdb.Query{
-		Model:      &User{},
-		FieldName:  "full_name",
-		FieldValue: "Doe",
-		Filter:     pomdb.QueryFilterContains,
+		Model:  &User{},
+		Field:  "full_name",
+		Value:  "Doe",
+		Filter: pomdb.QueryFilterContains,
 	}
 
 	res, err := client.FindMany(query)
@@ -82,7 +82,7 @@ func main() {
 	}
 
 	var docs []*User
-	for _, obj := range res {
+	for _, obj := range res.Docs {
 		doc := obj.(*User)
 		docs = append(docs, doc)
 	}
