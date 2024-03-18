@@ -202,8 +202,6 @@ var client = pomdb.Client{
   Region: "us-east-1",
   SoftDeletes: false,
 }
-
-// ...
 ```
 
 ## Working with Objects
