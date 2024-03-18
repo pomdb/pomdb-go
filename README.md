@@ -198,11 +198,7 @@ PomDB automatically sets the `CreatedAt` and `UpdatedAt` fields when an object i
 
 ##### <ins>**Soft-deleting objects**</ins>
 
-PomDB supports soft-deleting objects, and automatically sets the `DeletedAt` field to the current time when an object is deleted. The `DeletedAt` field is used to soft-delete objects, and is automatically set to `0` when an object is undeleted. Soft-deleted objects are not returned in queries, and are not included in the `FindAll` method.
-
-##### <ins>**Disabling soft-deletes**</ins>
-
-Soft-deletes are enabled by default, and can be disabled by setting the `SoftDeletes` field of the client to `false`:
+PomDB supports soft-deleting objects, and automatically sets the `DeletedAt` field to the current time when an object is deleted. The `DeletedAt` field is used to soft-delete objects, and is automatically set to `0` when an object is undeleted. Soft-deleted objects are not returned in queries, and are not included in the `FindAll` method. Soft-deletes are enabled by default, and can be disabled by setting the `SoftDeletes` field of the client to `false`:
 
 ```go
 var client = pomdb.Client{
