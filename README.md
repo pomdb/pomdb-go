@@ -167,6 +167,19 @@ type User struct {
 }
 ```
 
+> or, defining timestamps manually
+```go
+type User struct {
+  ID        pomdb.ULID `json:"id" pomdb:"id"`
+  CreatedAt time.Time   `json:"created_at" pomdb:"created_at"`
+  UpdatedAt time.Time   `json:"updated_at" pomdb:"updated_at"`
+  DeletedAt time.Time   `json:"deleted_at" pomdb:"deleted_at"`
+  FullName  string     `json:"full_name" pomdb:"index"`
+  Email     string     `json:"email" pomdb:"index,unique"`
+  //...
+}
+```
+
 > serializes to:
 ```json
 {
