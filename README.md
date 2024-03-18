@@ -156,7 +156,7 @@ type User struct {
 
 ### Object Timestamps
 
-PomDB timestamps are used to track when objects are created, updated, and deleted. Timestamps are provided by `pomdb.Model` as `CreatedAt`, `UpdatedAt`, and `DeletedAt` fields in `time.Time` format, and are serialized to `created_at`, `updated_at`, and `deleted_at` attributes in Unix seconds format:
+PomDB timestamps are used to track when objects are created, updated, and deleted. Timestamps are stored in the `CreatedAt`, `UpdatedAt`, and `DeletedAt` fields of the struct, and serialized to the `created_at`, `updated_at`, and `deleted_at` attributes in the json output. The native `time.Time` type is used to represent timestamps, and is automatically converted to and from Unix time:
 
 > embedding `pomdb.Model`
 ```go
@@ -171,9 +171,9 @@ type User struct {
 ```go
 type User struct {
   ID        pomdb.ULID `json:"id" pomdb:"id"`
-  CreatedAt time.Time   `json:"created_at" pomdb:"created_at"`
-  UpdatedAt time.Time   `json:"updated_at" pomdb:"updated_at"`
-  DeletedAt time.Time   `json:"deleted_at" pomdb:"deleted_at"`
+  CreatedAt pomdb.Timestamp `json:"created_at" pomdb:"created_at"`
+  UpdatedAt pomdb.Timestamp `json:"updated_at" pomdb:"updated_at"`
+  DeletedAt pomdb.Timestamp `json:"deleted_at" pomdb:"deleted_at"`
   FullName  string     `json:"full_name" pomdb:"index"`
   Email     string     `json:"email" pomdb:"index,unique"`
   //...
@@ -191,6 +191,10 @@ type User struct {
   "deleted_at": 0
 }
 ```
+
+#### Timestamp behavior
+
+PomDB automatically sets the `CreatedAt` and `UpdatedAt` fields when an object is created or updated. The `DeletedAt` field is set to `0` when an object is created, and is set to the current time when an object is deleted. The `DeletedAt` field is used to soft-delete objects, and is automatically set to `0` when an object is undeleted.
 
 ## Working with Objects
 
