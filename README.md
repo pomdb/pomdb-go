@@ -107,7 +107,7 @@ type User struct {
 }
 ```
 
-> or, manually defining fields
+> or, defining fields manually
 ```go
 type User struct {
   ID        pomdb.ULID      `json:"id" pomdb:"id"`
@@ -132,7 +132,7 @@ type User struct {
 }
 ```
 
-> or, manually defining `ID` field
+> or, defining `ID` field manually
 ```go
 type User struct {
   ID       pomdb.ULID `json:"id" pomdb:"id"`
