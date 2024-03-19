@@ -94,7 +94,7 @@ func NewModelCache(rv reflect.Value) *ModelCache {
 
 // SetManagedFields sets the managed fields in the cache.
 func (mc *ModelCache) SetManagedFields() {
-	mc.ModelID.Set(reflect.ValueOf(NewObjectID()))
+	mc.ModelID.Set(reflect.ValueOf(NewULID()))
 
 	if mc.CreatedAt != nil && mc.CreatedAt.CanSet() {
 		mc.CreatedAt.Set(reflect.ValueOf(NewTimestamp()))
@@ -109,7 +109,7 @@ func (mc *ModelCache) SetManagedFields() {
 
 // GetModelID returns the model ID from the cache.
 func (mc *ModelCache) GetModelID() string {
-	return mc.ModelID.Interface().(ObjectID).String()
+	return mc.ModelID.Interface().(ULID).String()
 }
 
 // SetUpdatedAt sets the UpdatedAt field in the cache.

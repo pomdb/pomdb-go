@@ -83,7 +83,7 @@ func (c *Client) CheckIndexExists(ca *ModelCache) error {
 
 // CreateIndexItems creates an index item in the given collection.
 func (c *Client) CreateIndexItems(ca *ModelCache) error {
-	id := ca.ModelID.Interface().(ObjectID).String()
+	id := ca.ModelID.Interface().(ULID).String()
 
 	for _, index := range ca.IndexFields {
 		log.Printf("CreateIndexItem: collection=%s, indexField=%v", ca.Collection, index)
@@ -115,7 +115,7 @@ func (c *Client) CreateIndexItems(ca *ModelCache) error {
 
 // UpdateIndexItems updates index items in the given collection.
 func (c *Client) UpdateIndexItems(ca *ModelCache) error {
-	id := ca.ModelID.Interface().(ObjectID).String()
+	id := ca.ModelID.Interface().(ULID).String()
 
 	for _, index := range ca.IndexFields {
 		if index.PreviousValue != "" {
