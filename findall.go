@@ -5,8 +5,11 @@ import (
 	"encoding/json"
 	"log"
 	"reflect"
+	"strings"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 )
 
 type FindAllResult struct {
@@ -43,6 +46,7 @@ func (c *Client) FindAll(q Query) (*FindAllResult, error) {
 		Bucket:            &c.Bucket,
 		Prefix:            &pfx,
 		MaxKeys:           &q.Limit,
+		Delimiter:         aws.String("/"),
 		ContinuationToken: token,
 	}
 
@@ -52,14 +56,23 @@ func (c *Client) FindAll(q Query) (*FindAllResult, error) {
 		return nil, err
 	}
 
-	if len(page.Contents) == 0 {
+	// Filter out the directories
+	var contents []types.Object
+	for _, obj := range page.Contents {
+		if strings.HasSuffix(*obj.Key, "/") {
+			continue
+		}
+		contents = append(contents, obj)
+	}
+
+	if len(contents) == 0 {
 		log.Println("FindAll: no objects found")
 		return nil, nil
 	}
 
 	// Fetch the list of objects
 	var docs []interface{}
-	for _, obj := range page.Contents {
+	for _, obj := range contents {
 		get := &s3.GetObjectInput{
 			Bucket: &c.Bucket,
 			Key:    obj.Key,

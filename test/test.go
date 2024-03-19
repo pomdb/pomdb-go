@@ -69,22 +69,38 @@ func main() {
 
 	// log.Printf("FindOne: found user %s with ID %s", doc.FullName, doc.ID)
 
+	// query := pomdb.Query{
+	// 	Model:  &User{},
+	// 	Field:  "full_name",
+	// 	Value:  "Doe",
+	// 	Filter: pomdb.QueryFilterContains,
+	// }
+
+	// res, err := client.FindMany(query)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	// users := make([]*User, len(res.Docs))
+	// for i, user := range res.Docs {
+	// 	users[i] = user.(*User)
+	// }
+
+	// log.Printf("FindMany: found %d users", len(users))
+
 	query := pomdb.Query{
-		Model:  &User{},
-		Field:  "full_name",
-		Value:  "Doe",
-		Filter: pomdb.QueryFilterContains,
+		Model: &User{},
 	}
 
-	res, err := client.FindMany(query)
+	res, err := client.FindAll(query)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	users := make([]User, len(res.Docs))
+	users := make([]*User, len(res.Docs))
 	for i, user := range res.Docs {
-		users[i] = user.(User)
+		users[i] = user.(*User)
 	}
 
-	log.Printf("FindMany: found %d users", len(users))
+	log.Printf("FindAll: found %d users", len(users))
 }
