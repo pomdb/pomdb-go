@@ -14,8 +14,8 @@ import (
 )
 
 type FindManyResult struct {
-	Docs   []interface{}
-	Cursor string
+	Contents  []interface{}
+	NextToken string
 }
 
 func (c *Client) FindMany(q Query) (*FindManyResult, error) {
@@ -134,7 +134,7 @@ func (c *Client) FindMany(q Query) (*FindManyResult, error) {
 	}
 
 	return &FindManyResult{
-		Docs:   docs,
-		Cursor: cursor,
+		Contents:  docs,
+		NextToken: cursor,
 	}, nil
 }

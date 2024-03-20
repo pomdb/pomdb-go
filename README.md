@@ -305,8 +305,8 @@ if err != nil {
   log.Fatal(err)
 }
 
-users := make([]User, len(res.Docs))
-for i, user := range res.Docs {
+users := make([]User, len(res.Contents))
+for i, user := range res.Contents {
   users[i] = user.(User)
 }
 ```
@@ -327,8 +327,8 @@ if err != nil {
   log.Fatal(err)
 }
 
-users := make([]User, len(res.Docs))
-for i, user := range res.Docs {
+users := make([]User, len(res.Contents))
+for i, user := range res.Contents {
   users[i] = user.(User)
 }
 
@@ -439,3 +439,37 @@ query := pomdb.Query{
 }
 ```
 
+## Pagination
+
+PomDB supports pagination using the `Limit` and `Token` fields of the query. The `Limit` field is used to specify the maximum number of objects to return per page, and the `Token` field is used to specify the starting point for the next page. If there are more objects to return, PomDB will set the `NextToken` field of the response to the token for the next page. If there are no more objects to return, `NextToken` will be an empty string.
+
+
+```go
+query := pomdb.Query{
+  Model: User{},
+  Limit: 10,
+  Token: "",
+}
+
+res, err := client.FindAll(query)
+if err != nil {
+  log.Fatal(err)
+}
+
+for res.NextToken != "" {
+  for _, user := range res.Contents {
+    // ...
+  }
+
+  query.Token = res.NextToken
+  res, err = client.FindAll(query)
+  if err != nil {
+    log.Fatal(err)
+  }
+}
+
+// process the last page
+for _, user := range res.Contents {
+  // ...
+}
+```

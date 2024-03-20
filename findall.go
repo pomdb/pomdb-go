@@ -13,8 +13,8 @@ import (
 )
 
 type FindAllResult struct {
-	Docs   []interface{}
-	Cursor string
+	Contents  []interface{}
+	NextToken string
 }
 
 // FindAll returns all objects of a given collection.
@@ -100,7 +100,7 @@ func (c *Client) FindAll(q Query) (*FindAllResult, error) {
 	}
 
 	return &FindAllResult{
-		Docs:   docs,
-		Cursor: nextToken,
+		Contents:  docs,
+		NextToken: nextToken,
 	}, nil
 }

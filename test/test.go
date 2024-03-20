@@ -97,8 +97,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	users := make([]*User, len(res.Docs))
-	for i, user := range res.Docs {
+	users := make([]*User, len(res.Contents))
+	for i, user := range res.Contents {
 		users[i] = user.(*User)
 	}
 
