@@ -18,9 +18,11 @@
 
 - Serverless client-driven architecture
 - S3-backed [durability]() and [consistency]()
+- [Strongly-typed]() and [schemaless]() data storage
 - [Pessimistic]() and [optimistic]() concurrency control
 - Lexicographically sortable [ULID]() identifiers
 - Real-time [change data capture]() via S3 events
+- [Soft-deletes]() for reversible data management
 - [Indexes]() for fast and efficient querying
 - Have a feature request? [Let us know]()
 
@@ -196,7 +198,7 @@ type User struct {
 
 #### Automatic timestamps
 
-PomDB automatically sets the `CreatedAt` and `UpdatedAt` fields when an object is created or updated. PomDB supports soft-deleting objects, and automatically sets the `DeletedAt` field to the current time when an object is deleted, and sets it to `0` when an object is restored. Soft-deleted objects are not returned in queries, and are not included in the `FindAll` method. Soft-deletes are enabled by default, and can be disabled by setting the `SoftDeletes` field of the client to `false`:
+PomDB automatically sets the `CreatedAt` and `UpdatedAt` fields when an object is created or updated. PomDB supports soft-deleting objects, and automatically sets the `DeletedAt` field to the current time when an object is deleted, and sets it to `0` when an object is restored. Soft-deleted objects are not returned in queries, and are not included in the `FindAll` method. Soft-deletes are enabled by default, and can be disabled by setting the `SoftDeletes` field of the client to `false`. Disabling soft-deletes will remove the `DeletedAt` field from the model:
 
 ```go
 var client = pomdb.Client{
@@ -235,8 +237,6 @@ user := User{
 if err := client.Create(&user); err != nil {
   log.Fatal(err)
 }
-
-// ...
 ```
 
 #### `Update`
@@ -284,8 +284,6 @@ if err != nil {
 }
 
 user := res.(*User)
-
-// ...
 ```
 
 #### `FindMany`
@@ -311,8 +309,6 @@ users := make([]User, len(res.Docs))
 for i, user := range res.Docs {
   users[i] = user.(User)
 }
-
-// ...
 ```
 
 #### `FindAll`
@@ -365,7 +361,6 @@ query := pomdb.Query{
   FieldName:  "email",
   FieldValue: "john.pip@zip.com",
   Filter:      pomdb.QueryFlagEquals,
-  // ..........^
 }
 ```
 
@@ -381,7 +376,6 @@ query := pomdb.Query{
   FieldName:  "name",
   FieldValue: "Pip",
   Filter:      pomdb.QueryFlagContains,
-  // ..........^
 }
 ```
 
@@ -397,7 +391,6 @@ query := pomdb.Query{
   FieldName:  "name",
   FieldValue: "John",
   Filter:      pomdb.QueryFlagStartsWith,
-  // ..........^
 }
 ```
 
@@ -413,7 +406,6 @@ query := pomdb.Query{
   FieldName:  "name",
   FieldValue: "Pip",
   Filter:      pomdb.QueryFlagEndsWith,
-  // ..........^
 }
 ```
 
@@ -429,7 +421,6 @@ query := pomdb.Query{
   FieldName:  "age",
   FieldValue: 21,
   Filter:      pomdb.QueryFlagGreaterThan,
-  // ..........^
 }
 ```
 
@@ -445,7 +436,6 @@ query := pomdb.Query{
   FieldName:  "age",
   FieldValue: 21,
   Filter:      pomdb.QueryFlagLessThan,
-  // ..........^
 }
 ```
 
