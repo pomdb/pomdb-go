@@ -173,7 +173,7 @@ type User struct {
 
 ### Object Timestamps
 
-PomDB timestamps are used to track when objects are created, updated, and deleted. Timestamps are stored in the `CreatedAt`, `UpdatedAt`, and `DeletedAt` fields of the struct, and serialized to the `created_at`, `updated_at`, and `deleted_at` attributes in the json output. The native `time.Time` type is used to represent timestamps, and is automatically converted to and from Unix time:
+Timestamps are used to track when objects are created, updated, and deleted. Timestamps are stored in the `CreatedAt`, `UpdatedAt`, and `DeletedAt` fields of the struct, and serialized to the `created_at`, `updated_at`, and `deleted_at` attributes in the json output. The native `time.Time` type is used to represent timestamps, and is automatically converted to and from Unix time. PomDB automatically sets the `CreatedAt` and `UpdatedAt` fields when an object is created or updated, and sets the `DeletedAt` field when an object is [soft-deleted](#soft-deletes):
 
 > embedding `pomdb.Model`
 ```go
@@ -209,9 +209,9 @@ type User struct {
 }
 ```
 
-#### Automatic timestamps
+#### Soft-deletes
 
-PomDB automatically sets the `CreatedAt` and `UpdatedAt` fields when an object is created or updated. PomDB supports soft-deleting objects, and automatically sets the `DeletedAt` field to the current time when an object is deleted, and sets it to `0` when an object is restored. Soft-deleted objects are not returned in queries, and are not included in the `FindAll` method. Soft-deletes are disabled by default, and can be enabled by setting the `SoftDeletes` field of the client to `true`. Enabling soft-deletes will add the `DeletedAt` field to the model:
+ PomDB supports soft-deletes, allowing objects to be marked as deleted without actually removing them from the database. Soft-deleted objects are stored in the database with a non-zero `DeletedAt` timestamp, and are automatically excluded from queries. To enable soft-deletes, set the `SoftDeletes` field of the client to `true`:
 
 ```go
 var client = pomdb.Client{
