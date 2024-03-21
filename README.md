@@ -1,6 +1,6 @@
 <div>
   <h1 align="center" style="margin-top: 0;">
-    <img src="pomdb.png" width=300 alt=""><br>
+    <img src="pomdb.png" width=250 alt=""><br>
     pomdb-go<br>
   </h1>
   <br>
