@@ -476,19 +476,11 @@ for _, user := range res.Contents {
 
 ## Concurrency Control
 
-PomDB supports both pessimistic and optimistic concurrency control. Pessimistic concurrency control is used to lock objects when they are read, and is enabled by default. Optimistic concurrency control is used to check for conflicts when objects are updated, and is disabled by default. Optimistic concurrency control can be enabled by setting the `Optimistic` field of the client to `true`:
-
-```go
-var client = pomdb.Client{
-  Bucket: "pomdb",
-  Region: "us-east-1",
-  Optimistic: true,
-}
-```
+PomDB implements advanced concurrency control mechanisms to efficiently manage data integrity in multi-user environments, including both pessimistic and optimistic concurrency control. This dual approach allows PomDB to cater to a wide range of application requirements, balancing data integrity with system performance.
 
 ### Pessimistic concurrency control
 
-PomDB includes pessimistic concurrency control, ensuring data integrity by locking records during transactions to prevent conflicting updates. This method can lead to decreased performance in high-traffic scenarios due to increased wait times and potential bottlenecks. To enable it, set the `Pessimistic` field of the client to `true`:
+Pessimistic concurrency control locks data during transactions to prevent conflicts. While this approach ensures data consistency by preventing concurrent modifications, it can impact performance in high-traffic scenarios. To enable it, set the `Pessimistic` field of the client to `true`:
 
 ```go
 var client = pomdb.Client{
@@ -500,7 +492,7 @@ var client = pomdb.Client{
 
 ### Optimistic concurrency control
 
-PomDB also supports optimistic concurrency control, enhancing efficiency by allowing concurrent data access and resolving conflicts when data changes during a transaction. This method can increase the likelihood of conflicts and retries in environments with frequent updates. To enable it, set the `Optimistic` field of the client to `true`:
+Optimistic concurrency control allows concurrent access and resolves conflicts as they occur. This approach offers higher throughput but may lead to increased conflicts and retries in environments with frequent data updates. To enable it, set the `Optimistic` field of the client to `true`:
 
 ```go
 var client = pomdb.Client{
