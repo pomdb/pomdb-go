@@ -1,5 +1,5 @@
 <div>
-  <h1 align="center" style="margin-top: 0;">
+  <h1 align="center">
     <img src="pomdb.png" width=250 alt=""><br>
     pomdb-go<br>
   </h1>
