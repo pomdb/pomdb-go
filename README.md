@@ -14,7 +14,20 @@
   </p>
 </div>
 
-## Features
+<!-- table of contents with emojis, top level headings only -->
+## Table of Contents
+
+- [:rocket: Feature Highlights](#feature-highlights)
+- [:package: Installation](#installation)
+- [:zap: Quick start](#quick-start)
+- [:gear: Creating a Client](#creating-a-client)
+- [:hammer: Creating a Model](#creating-a-model)
+- [:nut_and_bolt: Working with Objects](#working-with-objects)
+- [:mag: Working with Indexes](#working-with-indexes)
+- [:page_facing_up: Pagination](#pagination)
+- [:balance_scale: Concurrency Control](#concurrency-control)
+
+## Feature Highlights
 
 - Serverless client-driven architecture
 - S3-backed [durability]() and [consistency]()
