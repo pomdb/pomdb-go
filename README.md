@@ -489,7 +489,7 @@ for _, user := range res.Contents {
 
 ## Concurrency Control
 
-PomDB implements advanced concurrency control mechanisms to efficiently manage data integrity in multi-user environments, including both pessimistic and optimistic concurrency control. This dual approach allows PomDB to cater to a wide range of application requirements, balancing data integrity with system performance.
+PomDB implements advanced concurrency mechanisms to efficiently manage data integrity in multi-user environments, including both pessimistic and optimistic concurrency control. This dual approach allows PomDB to cater to a wide range of application requirements, balancing data integrity with system performance.
 
 ### Pessimistic concurrency control
 
