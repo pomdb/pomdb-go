@@ -1,6 +1,6 @@
 <div>
   <h1 align="center">
-    <img src="pomdb.png" width=250 alt=""><br>
+    <img src="https://github.com/pomdb/pomdb-go/assets/11765848/5dbac816-2944-4806-b5c3-524b78fe1012" width=250 alt=""><br>
     pomdb-go<br>
   </h1>
   <br>
