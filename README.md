@@ -473,3 +473,39 @@ for _, user := range res.Contents {
   // ...
 }
 ```
+
+## Concurrency Control
+
+PomDB supports both pessimistic and optimistic concurrency control. Pessimistic concurrency control is used to lock objects when they are read, and is enabled by default. Optimistic concurrency control is used to check for conflicts when objects are updated, and is disabled by default. Optimistic concurrency control can be enabled by setting the `Optimistic` field of the client to `true`:
+
+```go
+var client = pomdb.Client{
+  Bucket: "pomdb",
+  Region: "us-east-1",
+  Optimistic: true,
+}
+```
+
+### Pessimistic concurrency control
+
+PomDB includes pessimistic concurrency control, ensuring data integrity by locking records during transactions to prevent conflicting updates. This method can lead to decreased performance in high-traffic scenarios due to increased wait times and potential bottlenecks. To enable it, set the `Pessimistic` field of the client to `true`:
+
+```go
+var client = pomdb.Client{
+  Bucket: "pomdb",
+  Region: "us-east-1",
+  Pessimistic: true,
+}
+```
+
+### Optimistic concurrency control
+
+PomDB also supports optimistic concurrency control, enhancing efficiency by allowing concurrent data access and resolving conflicts when data changes during a transaction. This method can increase the likelihood of conflicts and retries in environments with frequent updates. To enable it, set the `Optimistic` field of the client to `true`:
+
+```go
+var client = pomdb.Client{
+  Bucket: "pomdb",
+  Region: "us-east-1",
+  Optimistic: true,
+}
+```
