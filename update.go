@@ -59,8 +59,8 @@ func (c *Client) Update(i interface{}) (*string, error) {
 		}
 	}
 
-	// Marshal the record
-	jsn, err := json.Marshal(i)
+	// Encode the object
+	enc, err := json.Marshal(i)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +69,7 @@ func (c *Client) Update(i interface{}) (*string, error) {
 	put := &s3.PutObjectInput{
 		Bucket: &c.Bucket,
 		Key:    &key,
-		Body:   bytes.NewReader(jsn),
+		Body:   bytes.NewReader(enc),
 	}
 
 	// Set the record's etag

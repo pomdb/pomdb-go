@@ -38,8 +38,8 @@ func (c *Client) Create(i interface{}) (*string, error) {
 		}
 	}
 
-	// Marshal the record
-	rec, err := json.Marshal(i)
+	// Encode the object
+	enc, err := json.Marshal(i)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func (c *Client) Create(i interface{}) (*string, error) {
 	put := &s3.PutObjectInput{
 		Bucket: &c.Bucket,
 		Key:    &key,
-		Body:   bytes.NewReader(rec),
+		Body:   bytes.NewReader(enc),
 	}
 
 	// Set the record's data

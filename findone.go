@@ -2,7 +2,6 @@ package pomdb
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -38,10 +37,11 @@ func (c *Client) FindOne(q Query) (interface{}, error) {
 	key := co + "/" + q.Value
 
 	if target == "index" {
-		// Encode index value
-		code := base64.StdEncoding.EncodeToString([]byte(q.Value))
 		// Set index key path
-		key = co + "/indexes/" + q.Field + "/" + code
+		key, err = encodeIndexKey(co, q.Field, q.Value)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	get := &s3.GetObjectInput{

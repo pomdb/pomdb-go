@@ -1,6 +1,7 @@
 package pomdb
 
 import (
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"reflect"
@@ -112,4 +113,17 @@ func tagContains(tagValue string, values []string) bool {
 	}
 
 	return true
+}
+
+// encodeIndexKey returns the index path for the given field name and value.
+func encodeIndexKey(c, f, v string) (string, error) {
+	// Encode the index field value in base64
+	code := base64.StdEncoding.EncodeToString([]byte(v))
+
+	if len(code) > 1024 {
+		return "", fmt.Errorf("[Error] encodeIndexKey: index %s with value %s is > 1024 bytes", f, v)
+	}
+
+	// Create the key path for the index item
+	return c + "/indexes/" + f + "/" + code, nil
 }

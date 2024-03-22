@@ -3,20 +3,25 @@ package pomdb
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"log"
+	"strconv"
+	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 )
 
 type Client struct {
-	Bucket  string
-	Region  string
-	Service *s3.Client
+	Service     *s3.Client
+	Bucket      string
+	Region      string
+	SoftDeletes bool
+	Pessimistic bool
+	Optimistic  bool
 }
 
 func (c *Client) Connect() error {
@@ -55,11 +60,11 @@ func (c *Client) CheckBucket() error {
 func (c *Client) CheckIndexExists(ca *ModelCache) error {
 	for _, index := range ca.IndexFields {
 		if index.IsUnique {
-			// Encode the index field value in base64
-			code := base64.StdEncoding.EncodeToString([]byte(index.CurrentValue))
-
 			// Create the key path for the index item
-			key := ca.Collection + "/indexes/" + index.FieldName + "/" + code
+			key, err := encodeIndexKey(ca.Collection, index.FieldName, index.CurrentValue)
+			if err != nil {
+				return err
+			}
 
 			head := &s3.HeadObjectInput{
 				Bucket: &c.Bucket,
@@ -67,7 +72,7 @@ func (c *Client) CheckIndexExists(ca *ModelCache) error {
 			}
 
 			var notFound *types.NotFound
-			_, err := c.Service.HeadObject(context.TODO(), head)
+			_, err = c.Service.HeadObject(context.TODO(), head)
 			if err != nil && !errors.As(err, &notFound) {
 				return err
 			}
@@ -88,16 +93,11 @@ func (c *Client) CreateIndexItems(ca *ModelCache) error {
 	for _, index := range ca.IndexFields {
 		log.Printf("CreateIndexItem: collection=%s, indexField=%v", ca.Collection, index)
 
-		// Encode the index field value in base64
-		code := base64.StdEncoding.EncodeToString([]byte(index.CurrentValue))
-
-		// If the encoded value is bigger than 1024 bytes, return an error
-		if len(code) > 1024 {
-			return fmt.Errorf("CreateIndexItem: index %s with value %s is too big", index.FieldName, index.CurrentValue)
-		}
-
 		// Create the key path for the index item
-		key := ca.Collection + "/indexes/" + index.FieldName + "/" + code
+		key, err := encodeIndexKey(ca.Collection, index.FieldName, index.CurrentValue)
+		if err != nil {
+			return err
+		}
 
 		put := &s3.PutObjectInput{
 			Bucket: &c.Bucket,
@@ -121,11 +121,11 @@ func (c *Client) UpdateIndexItems(ca *ModelCache) error {
 		if index.PreviousValue != "" {
 			log.Printf("UpdateIndexItem: collection=%s, indexField=%v", ca.Collection, index)
 
-			// Encode the index field value in base64
-			code := base64.StdEncoding.EncodeToString([]byte(index.PreviousValue))
-
 			// Create the key path for the old index item
-			oldKey := ca.Collection + "/indexes/" + index.FieldName + "/" + code
+			oldKey, err := encodeIndexKey(ca.Collection, index.FieldName, index.PreviousValue)
+			if err != nil {
+				return err
+			}
 
 			// Delete the old index item
 			del := &s3.DeleteObjectInput{
@@ -137,11 +137,11 @@ func (c *Client) UpdateIndexItems(ca *ModelCache) error {
 				return err
 			}
 
-			// Encode the index field value in base64
-			code = base64.StdEncoding.EncodeToString([]byte(index.CurrentValue))
-
 			// Create the key path for the new index item
-			newKey := ca.Collection + "/indexes/" + index.FieldName + "/" + code
+			newKey, err := encodeIndexKey(ca.Collection, index.FieldName, index.CurrentValue)
+			if err != nil {
+				return err
+			}
 
 			put := &s3.PutObjectInput{
 				Bucket: &c.Bucket,
@@ -163,11 +163,11 @@ func (c *Client) DeleteIndexItems(ca *ModelCache) error {
 	for _, index := range ca.IndexFields {
 		log.Printf("DeleteIndexItem: collection=%s, indexField=%v", ca.Collection, index)
 
-		// Encode the index field value in base64
-		code := base64.StdEncoding.EncodeToString([]byte(index.CurrentValue))
-
 		// Create the key path for the index item
-		key := ca.Collection + "/indexes/" + index.FieldName + "/" + code
+		key, err := encodeIndexKey(ca.Collection, index.FieldName, index.CurrentValue)
+		if err != nil {
+			return err
+		}
 
 		del := &s3.DeleteObjectInput{
 			Bucket: &c.Bucket,
@@ -175,8 +175,44 @@ func (c *Client) DeleteIndexItems(ca *ModelCache) error {
 		}
 
 		var notFound *types.NotFound
-		_, err := c.Service.DeleteObject(context.TODO(), del)
+		_, err = c.Service.DeleteObject(context.TODO(), del)
 		if err != nil && !errors.As(err, &notFound) {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// SoftDeleteIndexItems adds a `DeletedAt` tag to the record's indexes.
+func (c *Client) SoftDeleteIndexItems(ca *ModelCache) error {
+	for _, index := range ca.IndexFields {
+		log.Printf("SoftDeleteIndexItem: collection=%s, indexField=%v", ca.Collection, index)
+
+		// Create the key path for the index item
+		key, err := encodeIndexKey(ca.Collection, index.FieldName, index.CurrentValue)
+		if err != nil {
+			return err
+		}
+
+		// Create a deletion timestamp in seconds
+		ts := strconv.FormatInt(time.Now().Unix(), 10)
+
+		// Add the `DeletedAt` tag to the index item
+		put := &s3.PutObjectTaggingInput{
+			Bucket: &c.Bucket,
+			Key:    &key,
+			Tagging: &types.Tagging{
+				TagSet: []types.Tag{
+					{
+						Key:   aws.String("DeletedAt"),
+						Value: aws.String(ts),
+					},
+				},
+			},
+		}
+
+		if _, err := c.Service.PutObjectTagging(context.TODO(), put); err != nil {
 			return err
 		}
 	}

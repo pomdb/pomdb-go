@@ -14,8 +14,9 @@ type User struct {
 }
 
 var client = pomdb.Client{
-	Bucket: "pomdb",
-	Region: "us-east-1",
+	Bucket:      "pomdb",
+	Region:      "us-east-1",
+	SoftDeletes: true,
 }
 
 func main() {

@@ -94,7 +94,7 @@ The client is used to manage the location and structure of the database. PomDB r
 import (
   "log"
 
-  "github.com/nallenscott/pomdb-go"
+  "github.com/pomdb/pomdb-go"
 )
 
 var client = pomdb.Client{
