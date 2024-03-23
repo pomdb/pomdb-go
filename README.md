@@ -1,6 +1,6 @@
 <div>
   <h1 align="center">
-    <img src="https://github.com/pomdb/pomdb-go/assets/11765848/508a99b6-9405-4b2e-b0e1-1c660a17b8e4" width=250 alt=""><br>
+    <img src="https://github.com/pomdb/pomdb-go/assets/11765848/5dbac816-2944-4806-b5c3-524b78fe1012" width=250 alt=""><br>
     pomdb-go<br>
   </h1>
   <br>
@@ -187,12 +187,12 @@ type User struct {
 > or, defining timestamps manually
 ```go
 type User struct {
-  ID        pomdb.ULID `json:"id" pomdb:"id"`
+  ID        pomdb.ULID      `json:"id" pomdb:"id"`
   CreatedAt pomdb.Timestamp `json:"created_at" pomdb:"created_at"`
   UpdatedAt pomdb.Timestamp `json:"updated_at" pomdb:"updated_at"`
   DeletedAt pomdb.Timestamp `json:"deleted_at" pomdb:"deleted_at"`
-  FullName  string     `json:"full_name" pomdb:"index"`
-  Email     string     `json:"email" pomdb:"index,unique"`
+  FullName  string          `json:"full_name" pomdb:"index"`
+  Email     string          `json:"email" pomdb:"index,unique"`
   //...
 }
 ```
@@ -342,8 +342,8 @@ PomDB supports soft-deletes, allowing objects to be marked as deleted without ac
 
 ```go
 var client = pomdb.Client{
-  Bucket: "pomdb",
-  Region: "us-east-1",
+  Bucket:      "pomdb",
+  Region:      "us-east-1",
   SoftDeletes: true,
 }
 ```
@@ -393,7 +393,7 @@ query := pomdb.Query{
   Model:      User{},
   FieldName:  "email",
   FieldValue: "john.pip@zip.com",
-  Filter:      pomdb.QueryFlagEquals,
+  Filter:     pomdb.QueryFlagEquals,
 }
 ```
 
@@ -408,7 +408,7 @@ query := pomdb.Query{
   Model:      User{},
   FieldName:  "name",
   FieldValue: "Pip",
-  Filter:      pomdb.QueryFlagContains,
+  Filter:     pomdb.QueryFlagContains,
 }
 ```
 
@@ -423,7 +423,7 @@ query := pomdb.Query{
   Model:      User{},
   FieldName:  "name",
   FieldValue: "John",
-  Filter:      pomdb.QueryFlagStartsWith,
+  Filter:     pomdb.QueryFlagStartsWith,
 }
 ```
 
@@ -438,7 +438,7 @@ query := pomdb.Query{
   Model:      User{},
   FieldName:  "name",
   FieldValue: "Pip",
-  Filter:      pomdb.QueryFlagEndsWith,
+  Filter:     pomdb.QueryFlagEndsWith,
 }
 ```
 
@@ -453,7 +453,7 @@ query := pomdb.Query{
   Model:      User{},
   FieldName:  "age",
   FieldValue: 21,
-  Filter:      pomdb.QueryFlagGreaterThan,
+  Filter:     pomdb.QueryFlagGreaterThan,
 }
 ```
 
@@ -468,7 +468,7 @@ query := pomdb.Query{
   Model:      User{},
   FieldName:  "age",
   FieldValue: 21,
-  Filter:      pomdb.QueryFlagLessThan,
+  Filter:     pomdb.QueryFlagLessThan,
 }
 ```
 
@@ -517,8 +517,8 @@ Pessimistic concurrency control locks data during transactions to prevent confli
 
 ```go
 var client = pomdb.Client{
-  Bucket: "pomdb",
-  Region: "us-east-1",
+  Bucket:      "pomdb",
+  Region:      "us-east-1",
   Pessimistic: true,
 }
 ```
@@ -529,8 +529,8 @@ Optimistic concurrency control allows concurrent access and resolves conflicts a
 
 ```go
 var client = pomdb.Client{
-  Bucket: "pomdb",
-  Region: "us-east-1",
+  Bucket:     "pomdb",
+  Region:     "us-east-1",
   Optimistic: true,
 }
 ```
