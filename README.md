@@ -165,8 +165,8 @@ type User struct {
   "id": "01HS8Q7MVGA8CVCVVFYEH1VY2T",
   "full_name": "John Pip",
   "email": "john.pip@zip.com",
-  "created_at": 1630000000,
-  "updated_at": 1630000000,
+  "created_at": 1711210960,
+  "updated_at": 1711210960,
   "deleted_at": 0
 }
 ```
@@ -203,21 +203,9 @@ type User struct {
   "id": "01HS8Q7MVGA8CVCVVFYEH1VY2T",
   "full_name": "John Pip",
   "email": "john.pip@zip.com",
-  "created_at": 1710765131,
-  "updated_at": 1710765131,
+  "created_at": 1711210960,
+  "updated_at": 1711210960,
   "deleted_at": 0
-}
-```
-
-#### Soft-deletes
-
- PomDB supports soft-deletes, allowing objects to be marked as deleted without actually removing them from the database. Soft-deleted objects are stored in the database with a non-zero `DeletedAt` timestamp, and are automatically excluded from queries. To enable soft-deletes, set the `SoftDeletes` field of the client to `true`:
-
-```go
-var client = pomdb.Client{
-  Bucket: "pomdb",
-  Region: "us-east-1",
-  SoftDeletes: true,
 }
 ```
 
@@ -225,8 +213,8 @@ var client = pomdb.Client{
 
 Objects are stored in collections, and represent a single record in the database. Objects can be found in S3 under the following path:
 
-```
-<bucket>/<collection_name>/<object_id>
+```mustache
+{bucket}/{collection_name}/{object_id}
 ```
 
 ### Marshalling strategy
@@ -235,9 +223,9 @@ PomDB will convert the model name to snake case and pluralize it for the collect
 
 ### Query methods
 
-#### `Create`
+#### `Create(model interface{})`
 
-This method is used to create a new object in the database. The object must be a pointer to a struct that embeds the `pomdb.Model` struct, or defines an `ID` field of type `pomdb.ULID`, e.g.:
+This method is used to create a new object in the database. `model` must be a pointer to an interface that embeds the `pomdb.Model` struct, or defines an `ID` field of type `pomdb.ULID`, e.g.:
 
 > **Equivalent to** `INSERT INTO users (id, full_name, email) VALUES (...)`
 
@@ -252,9 +240,9 @@ if err := client.Create(&user); err != nil {
 }
 ```
 
-#### `Update`
+#### `Update(model interface{})`
 
-This method is used to update an existing object in the database. The object must be a pointer to a struct that embeds the `pomdb.Model` struct, or defines an `ID` field of type `pomdb.ULID`, e.g.:
+This method is used to update an existing object in the database. `model` must be a pointer to an interface that embeds the `pomdb.Model` struct, or defines an `ID` field of type `pomdb.ULID`, e.g.:
 
 > **Equivalent to** `UPDATE users SET email = 'jane.pip@zip.com' WHERE id = '...'`
 
@@ -266,9 +254,9 @@ if err := client.Update(&user); err != nil {
 }
 ```
 
-#### `Delete`
+#### `Delete(model interface{})`
 
-This method is used to delete an existing object in the database. The object must be a pointer to a struct that embeds the `pomdb.Model` struct, or defines an `ID` field of type `pomdb.ULID`, e.g.:
+This method is used to delete an existing object in the database. `model` must be a pointer to an interface that embeds the `pomdb.Model` struct, or defines an `ID` field of type `pomdb.ULID`. If [soft-deletes](#soft-deletes) are enabled, the object will be marked as deleted, and will be excluded from queries:
 
 > **Equivalent to** `DELETE FROM users WHERE id = '...'`
 
@@ -278,7 +266,7 @@ if err := client.Delete(&user); err != nil {
 }
 ```
 
-#### `FindOne`
+#### `FindOne(query pomdb.Query)`
 
 This method is used to find a single object in the database using an index. The query must include the model, field name, and field value, e.g.:
 
@@ -299,7 +287,7 @@ if err != nil {
 user := res.(*User)
 ```
 
-#### `FindMany`
+#### `FindMany(query pomdb.Query)`
 
 This method is used to find multiple objects in the database using an index. The query must include the model, field name, field value, and filter, e.g.:
 
@@ -324,7 +312,7 @@ for i, user := range res.Contents {
 }
 ```
 
-#### `FindAll`
+#### `FindAll(query pomdb.Query)`
 
 This method is used to find all objects in the database. The model must be included in the query, e.g.:
 
@@ -348,12 +336,48 @@ for i, user := range res.Contents {
 // ...
 ```
 
+### Soft-deletes
+
+PomDB supports soft-deletes, allowing objects to be marked as deleted without actually removing them from the database. Soft-deleted objects are stored in the database with a non-zero `DeletedAt` object tag, and are automatically excluded from queries. Soft-deleted objects can be restored or purged using the [`Restore`](#restore) and [`Purge`](#purge) methods, respectively. To enable soft-deletes, set the `SoftDeletes` field of the client to `true`:
+
+```go
+var client = pomdb.Client{
+  Bucket: "pomdb",
+  Region: "us-east-1",
+  SoftDeletes: true,
+}
+```
+
+#### `Restore(model interface{})`
+
+This method is used to restore a soft-deleted object in the database. `model` must be a pointer to an interface that embeds the `pomdb.Model` struct, or defines an `ID` field of type `pomdb.ULID`, e.g.:
+
+> **Equivalent to** `UPDATE users SET deleted_at = 0 WHERE id = '...'`
+
+```go
+if err := client.Restore(&user); err != nil {
+  log.Fatal(err)
+}
+```
+
+#### `Purge(model interface{})`
+
+This method is used to permanently delete a soft-deleted object and its indexes from the database. `model` must be a pointer to an interface that embeds the `pomdb.Model` struct, or defines an `ID` field of type `pomdb.ULID`, e.g.:
+
+> **Equivalent to** `DELETE FROM users WHERE id = '...'`
+
+```go
+if err := client.Purge(&user); err != nil {
+  log.Fatal(err)
+}
+```
+
 ## Working with Indexes
 
 Indexes are used to optimize queries. PomDB supports unique and non-unique indexes using the `pomdb:"index,unique"` and `pomdb:"index"` tags, respectively, and automatically maintains them when objects are created, updated, or deleted. Indexes can be found in S3 under the following path:
 
-```
-<bucket>/<collection_name>/indexes/<field_name>/<base64_encoded_value>
+```mustache
+{bucket}/{collection_name}/indexes/{field_name}/{base64_encoded_value}
 ```
 
 ### Encoding strategy
