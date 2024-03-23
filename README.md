@@ -256,7 +256,7 @@ if err := client.Update(&user); err != nil {
 
 #### `Delete(model interface{})`
 
-This method is used to delete an existing object in the database. `model` must be a pointer to an interface that embeds the `pomdb.Model` struct, or defines an `ID` field of type `pomdb.ULID`. If [soft-deletes](#soft-deletes) are enabled, the object will be marked as deleted, and will be excluded from queries:
+This method is used to delete an existing object in the database. `model` must be a pointer to an interface that embeds the `pomdb.Model` struct, or defines an `ID` field of type `pomdb.ULID`, e.g.:
 
 > **Equivalent to** `DELETE FROM users WHERE id = '...'`
 
@@ -352,8 +352,6 @@ var client = pomdb.Client{
 
 This method is used to restore a soft-deleted object in the database. `model` must be a pointer to an interface that embeds the `pomdb.Model` struct, or defines an `ID` field of type `pomdb.ULID`, e.g.:
 
-> **Equivalent to** `UPDATE users SET deleted_at = 0 WHERE id = '...'`
-
 ```go
 if err := client.Restore(&user); err != nil {
   log.Fatal(err)
@@ -363,8 +361,6 @@ if err := client.Restore(&user); err != nil {
 #### `Purge(model interface{})`
 
 This method is used to permanently delete a soft-deleted object and its indexes from the database. `model` must be a pointer to an interface that embeds the `pomdb.Model` struct, or defines an `ID` field of type `pomdb.ULID`, e.g.:
-
-> **Equivalent to** `DELETE FROM users WHERE id = '...'`
 
 ```go
 if err := client.Purge(&user); err != nil {
