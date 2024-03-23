@@ -213,8 +213,8 @@ type User struct {
 
 Objects are stored in collections, and represent a single record in the database. Objects can be found in S3 under the following path:
 
-```go
-`{{.bucket}}/{{.collection}}/{{.ulid}}`
+```hbs
+{{$bucket}}/{{$collection}}/{{$ulid}}
 ```
 
 ### Marshalling strategy
@@ -376,8 +376,8 @@ if err := client.Purge(&user); err != nil {
 
 Indexes are used to optimize queries. PomDB supports unique and non-unique indexes using the `pomdb:"index,unique"` and `pomdb:"index"` tags, respectively, and automatically maintains them when objects are created, updated, or deleted. Indexes can be found in S3 under the following path:
 
-```go
-`{{.bucket}}/{{.collection}}/indexes/{{.field}}/{{.value}}`
+```hbs
+{{$bucket}}/{{$collection}}/indexes/{{$field}}/{{$value}}
 ```
 
 ### Encoding strategy
