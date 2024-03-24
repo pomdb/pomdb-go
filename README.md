@@ -538,7 +538,7 @@ var client = pomdb.Client{
 
 ## Roadmap
 
-- [ ] https://github.com/orgs/pomdb/projects/2?pane=issue&itemId=57483126
-- [ ] Data encryption and security
-- [ ] Support for joins and aggregations
-- [ ] Versioning and data history
+- [ ] [Query optimization and caching](https://github.com/orgs/pomdb/projects/2?pane=issue&itemId=57483126)
+- [ ] [Data encryption and security](https://github.com/orgs/pomdb/projects/2/views/1?pane=issue&itemId=57483727)
+- [ ] [Support for joins and aggregations](https://github.com/orgs/pomdb/projects/2/views/1?pane=issue&itemId=57483736)
+- [ ] [Versioning and data history](https://github.com/orgs/pomdb/projects/2/views/1?pane=issue&itemId=57483743)
