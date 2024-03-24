@@ -538,7 +538,7 @@ var client = pomdb.Client{
 
 ## Roadmap
 
-- [ ] Query optimization and caching
+- [ ] https://github.com/orgs/pomdb/projects/2?pane=issue&itemId=57483126
 - [ ] Data encryption and security
 - [ ] Support for joins and aggregations
 - [ ] Versioning and data history
