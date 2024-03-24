@@ -24,18 +24,18 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// user := User{
-	// 	FullName: "John Pip",
-	// 	Email:    "john.pip@zip.com",
-	// 	Phone:    "1234567890",
-	// }
+	user := User{
+		FullName: "John Pip",
+		Email:    "john.pip@zip.com",
+		Phone:    "1234567890",
+	}
 
-	// crt, err := client.Create(&user)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+	crt, err := client.Create(&user)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	// log.Printf("created user with ETag: %s", *crt)
+	log.Printf("created user with ETag: %s", *crt)
 
 	// user.FullName = "Jane Doe"
 	// user.Email = "jane.pip@zip.com"
@@ -48,12 +48,26 @@ func main() {
 
 	// log.Printf("updated user with ETag: %s", *upt)
 
-	// del, err := client.Delete(&user)
+	del, err := client.Delete(&user)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Printf("deleted data for ID: %s", *del)
+
+	// res, err := client.Restore(&user)
 	// if err != nil {
 	// 	log.Fatal(err)
 	// }
 
-	// log.Printf("deleted data for ID: %s", *del)
+	// log.Printf("restored data for ID: %s", *res)
+
+	// pur, err := client.Purge(&user)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	// log.Printf("purged data for ID: %s", *pur)
 
 	// query := pomdb.Query{
 	// 	Model: &User{},
@@ -89,19 +103,19 @@ func main() {
 
 	// log.Printf("FindMany: found %d users", len(users))
 
-	query := pomdb.Query{
-		Model: &User{},
-	}
+	// query := pomdb.Query{
+	// 	Model: &User{},
+	// }
 
-	res, err := client.FindAll(query)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// res, err := client.FindAll(query)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	users := make([]*User, len(res.Contents))
-	for i, user := range res.Contents {
-		users[i] = user.(*User)
-	}
+	// users := make([]*User, len(res.Contents))
+	// for i, user := range res.Contents {
+	// 	users[i] = user.(*User)
+	// }
 
-	log.Printf("FindAll: found %d users", len(users))
+	// log.Printf("FindAll: found %d users", len(users))
 }

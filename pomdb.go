@@ -219,3 +219,52 @@ func (c *Client) SoftDeleteIndexItems(ca *ModelCache) error {
 
 	return nil
 }
+
+// RestoreIndexItems removes the `DeletedAt` tag from the record's indexes.
+func (c *Client) RestoreIndexItems(ca *ModelCache) error {
+	for _, index := range ca.IndexFields {
+		log.Printf("RestoreIndexItem: collection=%s, indexField=%v", ca.Collection, index)
+
+		// Create the key path for the index item
+		key, err := encodeIndexKey(ca.Collection, index.FieldName, index.CurrentValue)
+		if err != nil {
+			return err
+		}
+
+		// Remove the `DeletedAt` tag from the index item
+		del := &s3.DeleteObjectTaggingInput{
+			Bucket: &c.Bucket,
+			Key:    &key,
+		}
+
+		if _, err := c.Service.DeleteObjectTagging(context.TODO(), del); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// PurgeIndexItems permanently removes the record's indexes from the database.
+func (c *Client) PurgeIndexItems(ca *ModelCache) error {
+	for _, index := range ca.IndexFields {
+		log.Printf("PurgeIndexItem: collection=%s, indexField=%v", ca.Collection, index)
+
+		// Create the key path for the index item
+		key, err := encodeIndexKey(ca.Collection, index.FieldName, index.CurrentValue)
+		if err != nil {
+			return err
+		}
+
+		del := &s3.DeleteObjectInput{
+			Bucket: &c.Bucket,
+			Key:    &key,
+		}
+
+		if _, err := c.Service.DeleteObject(context.TODO(), del); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
