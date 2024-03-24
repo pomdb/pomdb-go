@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"reflect"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -14,10 +13,13 @@ import (
 )
 
 type FindManyResult struct {
-	Contents  []interface{}
+	Docs      []interface{}
 	NextToken string
 }
 
+// FindMany returns all objects of a given collection that match the query. It
+// returns an empty Docs slice if no objects are found, so it's safe to iterate
+// over the results without checking for nil.
 func (c *Client) FindMany(q Query) (*FindManyResult, error) {
 	if q.Field == "id" {
 		return nil, fmt.Errorf("FindMany: cannot search by id")
@@ -84,9 +86,38 @@ func (c *Client) FindMany(q Query) (*FindManyResult, error) {
 		return nil, err
 	}
 
+	// Filter soft-deletes
+	if c.SoftDeletes {
+		var matches []map[string]string
+		for _, m := range q.Matches {
+			tag := &s3.GetObjectTaggingInput{
+				Bucket: &c.Bucket,
+				Key:    aws.String(m["key"]),
+			}
+
+			tags, err := c.Service.GetObjectTagging(context.TODO(), tag)
+			if err != nil {
+				return nil, err
+			}
+
+			deleted := false
+			for _, t := range tags.TagSet {
+				if *t.Key == "DeletedAt" {
+					deleted = true
+					break
+				}
+			}
+
+			if !deleted {
+				matches = append(matches, m)
+			}
+		}
+
+		q.Matches = matches
+	}
+
 	if len(q.Matches) == 0 {
-		log.Println("FindMany: no objects found")
-		return nil, nil
+		return &FindManyResult{}, nil
 	}
 
 	// Fetch the documents
@@ -134,7 +165,7 @@ func (c *Client) FindMany(q Query) (*FindManyResult, error) {
 	}
 
 	return &FindManyResult{
-		Contents:  docs,
+		Docs:      docs,
 		NextToken: cursor,
 	}, nil
 }

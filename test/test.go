@@ -8,9 +8,9 @@ import (
 
 type User struct {
 	pomdb.Model
-	FullName string `json:"full_name" validate:"required" pomdb:"index"`
-	Email    string `json:"email" validate:"required,email" pomdb:"index,unique"`
-	Phone    string `json:"phone" validate:"required,phone" pomdb:"index,unique"`
+	FullName string `json:"full_name" pomdb:"index"`
+	Email    string `json:"email" pomdb:"index,unique"`
+	Phone    string `json:"phone" pomdb:"index,unique"`
 }
 
 var client = pomdb.Client{
@@ -72,7 +72,7 @@ func main() {
 	// query := pomdb.Query{
 	// 	Model: &User{},
 	// 	Field: "email",
-	// 	Value: "jane.pip@zip.com",
+	// 	Value: "john.pip@zip.com",
 	// }
 
 	// obj, err := client.FindOne(query)
@@ -87,7 +87,7 @@ func main() {
 	// query := pomdb.Query{
 	// 	Model:  &User{},
 	// 	Field:  "full_name",
-	// 	Value:  "Doe",
+	// 	Value:  "Pip",
 	// 	Filter: pomdb.QueryFilterContains,
 	// }
 
@@ -112,8 +112,8 @@ func main() {
 	// 	log.Fatal(err)
 	// }
 
-	// users := make([]*User, len(res.Contents))
-	// for i, user := range res.Contents {
+	// users := make([]*User, len(res.Docs))
+	// for i, user := range res.Docs {
 	// 	users[i] = user.(*User)
 	// }
 

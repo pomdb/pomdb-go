@@ -3,7 +3,6 @@ package pomdb
 import (
 	"context"
 	"encoding/json"
-	"log"
 	"reflect"
 	"strings"
 
@@ -13,11 +12,13 @@ import (
 )
 
 type FindAllResult struct {
-	Contents  []interface{}
+	Docs      []interface{}
 	NextToken string
 }
 
-// FindAll returns all objects of a given collection.
+// FindAll returns all objects of a given collection. It returns an empty Docs
+// slice if no objects are found, so it's safe to iterate over the results
+// without checking for nil.
 func (c *Client) FindAll(q Query) (*FindAllResult, error) {
 	// Set default limit
 	if q.Limit == 0 {
@@ -56,18 +57,44 @@ func (c *Client) FindAll(q Query) (*FindAllResult, error) {
 		return nil, err
 	}
 
-	// Filter out the directories
+	// Filter out directories
 	var contents []types.Object
 	for _, obj := range page.Contents {
 		if strings.HasSuffix(*obj.Key, "/") {
 			continue
 		}
+
 		contents = append(contents, obj)
 	}
 
+	// Filter soft deletes
+	if c.SoftDeletes {
+		var active []types.Object
+		for _, obj := range contents {
+			tag := &s3.GetObjectTaggingInput{
+				Bucket: &c.Bucket,
+				Key:    obj.Key,
+			}
+
+			tags, err := c.Service.GetObjectTagging(context.TODO(), tag)
+			if err != nil {
+				return nil, err
+			}
+
+			for _, t := range tags.TagSet {
+				if *t.Key == "DeletedAt" {
+					continue
+				}
+
+				active = append(active, obj)
+			}
+
+			contents = active
+		}
+	}
+
 	if len(contents) == 0 {
-		log.Println("FindAll: no objects found")
-		return nil, nil
+		return &FindAllResult{}, nil
 	}
 
 	// Fetch the list of objects
@@ -100,7 +127,7 @@ func (c *Client) FindAll(q Query) (*FindAllResult, error) {
 	}
 
 	return &FindAllResult{
-		Contents:  docs,
+		Docs:      docs,
 		NextToken: nextToken,
 	}, nil
 }
