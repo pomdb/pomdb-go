@@ -512,7 +512,7 @@ for _, user := range res.Contents {
 
 PomDB implements advanced concurrency mechanisms to efficiently manage data integrity in multi-user environments, including both pessimistic and optimistic concurrency control. This dual approach allows PomDB to cater to a wide range of application requirements, balancing data integrity with system performance.
 
-### Pessimistic concurrency control
+### Pessimistic
 
 Pessimistic concurrency control locks data during transactions to prevent conflicts. While this approach ensures data consistency by preventing concurrent modifications, it can impact performance in high-traffic scenarios. To enable it, set the `Pessimistic` field of the client to `true`:
 
@@ -524,7 +524,7 @@ var client = pomdb.Client{
 }
 ```
 
-### Optimistic concurrency control
+### Optimistic
 
 Optimistic concurrency control allows concurrent access and resolves conflicts as they occur. This approach offers higher throughput but may lead to increased conflicts and retries in environments with frequent data updates. To enable it, set the `Optimistic` field of the client to `true`:
 
