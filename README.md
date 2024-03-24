@@ -26,6 +26,7 @@
 - [:mag: Working with Indexes](#working-with-indexes)
 - [:page_facing_up: Pagination](#pagination)
 - [:balance_scale: Concurrency Control](#concurrency-control)
+- [:construction: Roadmap](#roadmap)
 
 ## Feature Highlights
 
