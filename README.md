@@ -534,3 +534,10 @@ var client = pomdb.Client{
   Optimistic: true,
 }
 ```
+
+## Roadmap
+
+- [ ] Query optimization and caching
+- [ ] Data encryption and security
+- [ ] Support for joins and aggregations
+- [ ] Versioning and data history
