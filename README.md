@@ -37,7 +37,8 @@
 - Lexicographically sortable [ULID]() identifiers
 - Real-time [change data capture]() via S3 events
 - [Soft-deletes]() for reversible data management
-- [Indexes]() for fast and efficient querying
+- [Inverted indexes]() for fast and efficient querying
+- [Pagination]() for large data sets and high throughput
 - Have a feature request? [Let us know]()
 
 ## Installation
