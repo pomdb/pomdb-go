@@ -97,12 +97,5 @@ func (c *Client) SoftDelete(i interface{}) (*string, error) {
 		return nil, err
 	}
 
-	// Check indexes
-	if len(ca.IndexFields) > 0 {
-		if err := c.SoftDeleteIndexItems(ca); err != nil {
-			return nil, err
-		}
-	}
-
 	return &id, nil
 }

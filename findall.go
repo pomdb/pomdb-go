@@ -40,26 +40,29 @@ func (c *Client) FindAll(q Query) (*FindAllResult, error) {
 	// Build the struct cache
 	ca := NewModelCache(rv)
 
-	// Set index pfx path
+	// Set record pfx path
 	pfx := ca.Collection + "/"
 
 	lst := &s3.ListObjectsV2Input{
-		Bucket:            &c.Bucket,
-		Prefix:            &pfx,
-		MaxKeys:           &q.Limit,
-		Delimiter:         aws.String("/"),
-		ContinuationToken: token,
+		Bucket:    &c.Bucket,
+		Prefix:    &pfx,
+		MaxKeys:   &q.Limit,
+		Delimiter: aws.String("/"),
 	}
 
-	// Fetch the first page of objects
-	page, err := c.Service.ListObjectsV2(context.TODO(), lst)
+	if token != nil {
+		lst.ContinuationToken = token
+	}
+
+	// Fetch the first pge of objects
+	pge, err := c.Service.ListObjectsV2(context.TODO(), lst)
 	if err != nil {
 		return nil, err
 	}
 
 	// Filter out directories
 	var contents []types.Object
-	for _, obj := range page.Contents {
+	for _, obj := range pge.Contents {
 		if strings.HasSuffix(*obj.Key, "/") {
 			continue
 		}
@@ -70,10 +73,10 @@ func (c *Client) FindAll(q Query) (*FindAllResult, error) {
 	// Filter soft deletes
 	if c.SoftDeletes {
 		var active []types.Object
-		for _, obj := range contents {
+		for _, o := range contents {
 			tag := &s3.GetObjectTaggingInput{
 				Bucket: &c.Bucket,
-				Key:    obj.Key,
+				Key:    o.Key,
 			}
 
 			tags, err := c.Service.GetObjectTagging(context.TODO(), tag)
@@ -81,16 +84,20 @@ func (c *Client) FindAll(q Query) (*FindAllResult, error) {
 				return nil, err
 			}
 
+			deleted := false
 			for _, t := range tags.TagSet {
 				if *t.Key == "DeletedAt" {
-					continue
+					deleted = true
+					break
 				}
-
-				active = append(active, obj)
 			}
 
-			contents = active
+			if !deleted {
+				active = append(active, o)
+			}
 		}
+
+		contents = active
 	}
 
 	if len(contents) == 0 {
@@ -122,8 +129,8 @@ func (c *Client) FindAll(q Query) (*FindAllResult, error) {
 
 	// Set the next page token
 	var nextToken string
-	if page.NextContinuationToken != nil {
-		nextToken = *page.NextContinuationToken
+	if pge.NextContinuationToken != nil {
+		nextToken = *pge.NextContinuationToken
 	}
 
 	return &FindAllResult{

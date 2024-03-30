@@ -25,7 +25,7 @@ func (c *Client) Purge(i interface{}) (*string, error) {
 
 	// Check indexes
 	if len(ca.IndexFields) > 0 {
-		if err := c.PurgeIndexItems(ca); err != nil {
+		if err := c.DeleteIndexItems(ca); err != nil {
 			return nil, err
 		}
 	}

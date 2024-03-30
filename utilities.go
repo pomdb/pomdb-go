@@ -115,15 +115,20 @@ func tagContains(tagValue string, values []string) bool {
 	return true
 }
 
-// encodeIndexKey returns the index path for the given field name and value.
-func encodeIndexKey(c, f, v string) (string, error) {
+// encodeIndexPrefix returns the index path for the given field name and value.
+func encodeIndexPrefix(collection, field, value string, unique bool) (string, error) {
 	// Encode the index field value in base64
-	code := base64.StdEncoding.EncodeToString([]byte(v))
+	code := base64.StdEncoding.EncodeToString([]byte(value))
 
 	if len(code) > 1024 {
-		return "", fmt.Errorf("[Error] encodeIndexKey: index %s with value %s is > 1024 bytes", f, v)
+		return "", fmt.Errorf("[Error] encodeIndexKey: index %s with value %s is > 1024 bytes", field, value)
 	}
 
-	// Create the key path for the index item
-	return c + "/indexes/" + f + "/" + code, nil
+	if unique {
+		// Create the key path for the unique index item
+		return collection + "/indexes/unique/" + field + "/" + code, nil
+	} else {
+		// Create the key path for the shared index item
+		return collection + "/indexes/shared/" + field + "/" + code, nil
+	}
 }

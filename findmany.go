@@ -2,14 +2,14 @@ package pomdb
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io"
 	"reflect"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 )
 
 type FindManyResult struct {
@@ -23,11 +23,6 @@ type FindManyResult struct {
 func (c *Client) FindMany(q Query) (*FindManyResult, error) {
 	if q.Field == "id" {
 		return nil, fmt.Errorf("FindMany: cannot search by id")
-	}
-
-	// Set default filter
-	if q.Filter == "" {
-		q.Filter = QueryFilterEquals
 	}
 
 	// Set default limit
@@ -51,48 +46,33 @@ func (c *Client) FindMany(q Query) (*FindManyResult, error) {
 	ca := NewModelCache(rv)
 
 	// Set index pfx path
-	pfx := ca.Collection + "/indexes/" + q.Field + "/"
-
-	// Fetch the list of objects
-	lst := &s3.ListObjectsV2Input{
-		Bucket:            &c.Bucket,
-		Prefix:            &pfx,
-		MaxKeys:           &q.Limit,
-		ContinuationToken: token,
-	}
-
-	// Fetch the first pge of objects
-	pge, err := c.Service.ListObjectsV2(context.TODO(), lst)
+	pfx, err := encodeIndexPrefix(ca.Collection, q.Field, q.Value, false)
 	if err != nil {
 		return nil, err
 	}
 
-	var idxs []map[string]string
-	for _, obj := range pge.Contents {
-		key := *obj.Key
-		name, err := base64.StdEncoding.DecodeString(key[len(pfx):])
-		if err != nil {
-			return nil, err
-		}
-		idxs = append(idxs, map[string]string{
-			"key":   key,
-			"value": string(name),
-		})
+	lst := &s3.ListObjectsV2Input{
+		Bucket:  &c.Bucket,
+		Prefix:  &pfx,
+		MaxKeys: &q.Limit,
 	}
 
-	// Find the matches
-	err = q.FilterMatches(idxs)
+	if token != nil {
+		lst.ContinuationToken = token
+	}
+
+	pge, err := c.Service.ListObjectsV2(context.TODO(), lst)
 	if err != nil {
 		return nil, err
 	}
 
 	// Filter soft-deletes
 	if c.SoftDeletes {
-		var matches []map[string]string
-		for _, m := range q.Matches {
+		var contents []types.Object
+		for _, o := range pge.Contents {
 			tag := &s3.GetObjectTaggingInput{
 				Bucket: &c.Bucket,
-				Key:    aws.String(m["key"]),
+				Key:    o.Key,
 			}
 
 			tags, err := c.Service.GetObjectTagging(context.TODO(), tag)
@@ -109,48 +89,36 @@ func (c *Client) FindMany(q Query) (*FindManyResult, error) {
 			}
 
 			if !deleted {
-				matches = append(matches, m)
+				contents = append(contents, o)
 			}
 		}
 
-		q.Matches = matches
+		pge.Contents = contents
 	}
 
-	if len(q.Matches) == 0 {
+	// Check for no results
+	if len(pge.Contents) == 0 {
 		return &FindManyResult{}, nil
 	}
 
 	// Fetch the documents
 	var docs []interface{}
-	for _, m := range q.Matches {
+	for _, o := range pge.Contents {
+		uid := strings.TrimPrefix(*o.Key, pfx+"/")
+
 		get := &s3.GetObjectInput{
 			Bucket: &c.Bucket,
-			Key:    aws.String(m["key"]),
+			Key:    aws.String(ca.Collection + "/" + uid),
 		}
 
-		idx, err := c.Service.GetObject(context.TODO(), get)
-		if err != nil {
-			return nil, err
-		}
-
-		bdy, err := io.ReadAll(idx.Body)
-		if err != nil {
-			return nil, err
-		}
-
-		get = &s3.GetObjectInput{
-			Bucket: &c.Bucket,
-			Key:    aws.String(ca.Collection + "/" + string(bdy)),
-		}
-
-		rec, err := c.Service.GetObject(context.TODO(), get)
+		doc, err := c.Service.GetObject(context.TODO(), get)
 		if err != nil {
 			return nil, err
 		}
 
 		elem := reflect.TypeOf(q.Model).Elem()
 		model := reflect.New(elem).Interface()
-		err = json.NewDecoder(rec.Body).Decode(&model)
+		err = json.NewDecoder(doc.Body).Decode(&model)
 		if err != nil {
 			return nil, err
 		}

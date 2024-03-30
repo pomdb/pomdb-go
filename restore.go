@@ -36,12 +36,5 @@ func (c *Client) Restore(i interface{}) (*string, error) {
 		return nil, err
 	}
 
-	// Restore the indexes
-	if len(ca.IndexFields) > 0 {
-		if err := c.RestoreIndexItems(ca); err != nil {
-			return nil, err
-		}
-	}
-
 	return &id, nil
 }

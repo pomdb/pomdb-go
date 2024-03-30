@@ -8,9 +8,10 @@ import (
 
 type User struct {
 	pomdb.Model
-	FullName string `json:"full_name" pomdb:"index"`
-	Email    string `json:"email" pomdb:"index,unique"`
-	Phone    string `json:"phone" pomdb:"index,unique"`
+	FirstName string `json:"first_name" pomdb:"index"`
+	LastName  string `json:"last_name" pomdb:"index"`
+	Email     string `json:"email" pomdb:"index,unique"`
+	Phone     string `json:"phone" pomdb:"index,unique"`
 }
 
 var client = pomdb.Client{
@@ -25,9 +26,10 @@ func main() {
 	}
 
 	user := User{
-		FullName: "John Pip",
-		Email:    "john.pip@zip.com",
-		Phone:    "1234567890",
+		FirstName: "John",
+		LastName:  "Pip",
+		Email:     "john.pip@zip.com",
+		Phone:     "1234567890",
 	}
 
 	crt, err := client.Create(&user)
@@ -37,7 +39,7 @@ func main() {
 
 	log.Printf("created user with ETag: %s", *crt)
 
-	// user.FullName = "Jane Doe"
+	// user.FirstName = "Jane"
 	// user.Email = "jane.pip@zip.com"
 	// user.Phone = "0987654321"
 
@@ -82,13 +84,12 @@ func main() {
 
 	// doc := obj.(*User)
 
-	// log.Printf("FindOne: found user %s with ID %s", doc.FullName, doc.ID)
+	// log.Printf("FindOne: found user %s with ID %s", doc.FirstName, doc.ID)
 
 	// query := pomdb.Query{
-	// 	Model:  &User{},
-	// 	Field:  "full_name",
-	// 	Value:  "Pip",
-	// 	Filter: pomdb.QueryFilterContains,
+	// 	Model: &User{},
+	// 	Field: "first_name",
+	// 	Value: "John",
 	// }
 
 	// res, err := client.FindMany(query)
@@ -103,19 +104,19 @@ func main() {
 
 	// log.Printf("FindMany: found %d users", len(users))
 
-	// query := pomdb.Query{
-	// 	Model: &User{},
-	// }
+	query := pomdb.Query{
+		Model: &User{},
+	}
 
-	// res, err := client.FindAll(query)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+	res, err := client.FindAll(query)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	// users := make([]*User, len(res.Docs))
-	// for i, user := range res.Docs {
-	// 	users[i] = user.(*User)
-	// }
+	users := make([]*User, len(res.Docs))
+	for i, user := range res.Docs {
+		users[i] = user.(*User)
+	}
 
-	// log.Printf("FindAll: found %d users", len(users))
+	log.Printf("FindAll: found %d users", len(users))
 }

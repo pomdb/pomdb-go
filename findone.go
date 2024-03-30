@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"reflect"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
@@ -37,10 +37,35 @@ func (c *Client) FindOne(q Query) (interface{}, error) {
 
 	if target == "index" {
 		// Set index key path
-		key, err = encodeIndexKey(co, q.Field, q.Value)
+		pfx, err := encodeIndexPrefix(co, q.Field, q.Value, true)
 		if err != nil {
 			return nil, err
 		}
+
+		// Check if index exists
+		lst := &s3.ListObjectsV2Input{
+			Bucket: &c.Bucket,
+			Prefix: &pfx,
+		}
+
+		res, err := c.Service.ListObjectsV2(context.TODO(), lst)
+		if err != nil {
+			return nil, err
+		}
+
+		if res.Contents == nil {
+			return nil, fmt.Errorf("FindOne: index not found: collection=%s, field=%s, value=%s", co, q.Field, q.Value)
+		}
+
+		if len(res.Contents) > 1 {
+			return nil, fmt.Errorf("FindOne: multiple records found: collection=%s, field=%s, value=%s", co, q.Field, q.Value)
+		}
+
+		// Get record id
+		uid := strings.TrimPrefix(*res.Contents[0].Key, pfx+"/")
+
+		// Set key path
+		key = co + "/" + uid
 	}
 
 	// Filter soft deletes
@@ -57,7 +82,7 @@ func (c *Client) FindOne(q Query) (interface{}, error) {
 
 		for _, t := range tags.TagSet {
 			if *t.Key == "DeletedAt" {
-				return nil, fmt.Errorf("FindOne: %s not found: collection=%s, field=%s, value=%s", target, co, q.Field, q.Value)
+				return nil, fmt.Errorf("FindOne: record not found: collection=%s, field=%s, value=%s", co, q.Field, q.Value)
 			}
 		}
 	}
@@ -71,33 +96,9 @@ func (c *Client) FindOne(q Query) (interface{}, error) {
 	var noSuchKey *types.NoSuchKey
 	rec, err := c.Service.GetObject(context.TODO(), get)
 	if err != nil && errors.As(err, &noSuchKey) {
-		return nil, fmt.Errorf("FindOne: %s not found: collection=%s, field=%s, value=%s", target, co, q.Field, q.Value)
+		return nil, fmt.Errorf("FindOne: record not found: collection=%s, field=%s, value=%s", co, q.Field, q.Value)
 	} else if err != nil {
 		return nil, err
-	}
-
-	if target == "index" {
-		bdy, err := io.ReadAll(rec.Body)
-		if err != nil {
-			return nil, err
-		}
-
-		id := string(bdy)
-
-		key = co + "/" + id
-
-		get = &s3.GetObjectInput{
-			Bucket: &c.Bucket,
-			Key:    &key,
-		}
-
-		// Fetch the record
-		rec, err = c.Service.GetObject(context.TODO(), get)
-		if err != nil && errors.As(err, &noSuchKey) {
-			return nil, fmt.Errorf("FindOne: record not found: collection=%s, id=%s", co, id)
-		} else if err != nil {
-			return nil, err
-		}
 	}
 
 	elem := reflect.TypeOf(q.Model).Elem()
