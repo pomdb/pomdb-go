@@ -384,7 +384,7 @@ Indexes are used to optimize queries. PomDB supports the following index types, 
 
 #### `unique`
 
-Enforces uniqueness of the field's value across the collection. In the example, Any 'Email' field in 'User' structs will be indexed uniquely. PomDB ensures no two 'User' records have the same email.
+Enforces uniqueness of the field's value across the collection. In the example, any `Email` field in `User` structs will be indexed uniquely. PomDB ensures no two `User` records have the same email.
 
 ```go
 type User struct {
@@ -396,7 +396,7 @@ type User struct {
 
 #### `shared`
 
-Allows multiple records to share the same value for the indexed field. In the example, 'Category' is indexed non-uniquely, allowing aggregation and querying of 'Product' records by shared categories.
+Allows multiple records to share the same value for the indexed field. In the example, `Category` is indexed non-uniquely, allowing aggregation and querying of 'Product' records by shared categories.
 
 ```go
 type Product struct {
@@ -408,7 +408,7 @@ type Product struct {
 
 #### `composite`
 
-Combines multiple fields into a single index for querying based on multiple criteria. In the example, Both 'CustomerID' and 'ProductID' are part of a composite index named 'OrderIndex', allowing queries involving both fields.
+Combines multiple fields into a single index for querying based on multiple criteria. In the example, both `CustomerID` and `ProductID` are part of a composite index named `OrderIndex`, allowing queries involving both fields.
 
 ```go
 type Order struct {
@@ -421,7 +421,7 @@ type Order struct {
 
 #### `range`
 
-Facilitates queries within a range of values, like dates or numbers. In the example, 'Date' is indexed for range queries, allowing for queries like events happening within a certain time frame.
+Facilitates queries within a range of values, like dates or numbers. In the example, `Date` is indexed for range queries, allowing for queries like events happening within a certain time frame.
 
 ```go
 type Event struct {
