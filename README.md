@@ -392,7 +392,7 @@ type User struct {
   // ...
 }
 ```
-> **S3**: `/{{$collection}}/indexes/unique/{{$field}}/{{$value}}/{{$ulid}}`
+> **S3**: `/{{$col}}/indexes/unique/{{$fld}}/{{$val}}/{{$uid}}`
 
 #### `shared`
 
@@ -404,7 +404,7 @@ type Product struct {
   // ...
 }
 ```
-> **S3**: `/{{$collection}}/indexes/shared/{{$field}}/{{$value}}/{{$[]ulid}}`
+> **S3**: `/{{$col}}/indexes/shared/{{$fld}}/{{$val}}/{{$[]uid}}`
 
 #### `composite`
 
@@ -417,7 +417,7 @@ type Order struct {
   // ...
 }
 ```
-> **S3**: `/{{$collection}}/indexes/composite/{{$field1}}/{{$value1}}/{{$field2}}/{{$value2}}/{{$[]ulid}}`
+> **S3**: `/{{$col}}/indexes/composite/{{$fld1}}/{{$val1}}/{{$fld2}}/{{$val2}}/{{$[]uid}}`
 
 #### `range`
 
@@ -429,7 +429,7 @@ type Event struct {
   // ...
 }
 ```
-> **S3**: `/{{$collection}}/indexes/range/{{$field}}/{{$value}}/{{$[]ulid}}`
+> **S3**: `/{{$col}}/indexes/range/{{$fld}}/{{$val}}/{{$[]ulid}}`
 
 ### Encoding strategy
 
