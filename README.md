@@ -146,17 +146,19 @@ PomDB automatically generates a Universally Unique Lexicographically Sortable Id
 ```go
 type User struct {
   pomdb.Model
-  FullName string `json:"full_name" pomdb:"index"`
-  Email    string `json:"email" pomdb:"index,unique"`
+  FirstName string `json:"first_name" pomdb:"index"`
+  LastName  string `json:"last_name" pomdb:"index"`
+  Email     string `json:"email" pomdb:"index,unique"`
 }
 ```
 
 > or, defining `ID` field manually
 ```go
 type User struct {
-  ID       pomdb.ULID `json:"id" pomdb:"id"`
-  FullName string     `json:"full_name" pomdb:"index"`
-  Email    string     `json:"email" pomdb:"index,unique"`
+  ID        pomdb.ULID `json:"id" pomdb:"id"`
+  FirstName string     `json:"first_name" pomdb:"index"`
+  LastName  string     `json:"last_name" pomdb:"index"`
+  Email     string     `json:"email" pomdb:"index,unique"`
   //...
 }
 ```
@@ -165,7 +167,8 @@ type User struct {
 ```json
 {
   "id": "01HS8Q7MVGA8CVCVVFYEH1VY2T",
-  "full_name": "John Pip",
+  "first_name": "John",
+  "last_name": "Pip",
   "email": "john.pip@zip.com",
   "created_at": 1711210960,
   "updated_at": 1711210960,
@@ -181,7 +184,8 @@ Timestamps are used to track when objects are created, updated, and deleted. The
 ```go
 type User struct {
   pomdb.Model
-  FullName  string `json:"full_name" pomdb:"index"`
+  FirstName string `json:"first_name" pomdb:"index"`
+  LastName  string `json:"last_name" pomdb:"index"`
   Email     string `json:"email" pomdb:"index,unique"`
 }
 ```
@@ -193,7 +197,8 @@ type User struct {
   CreatedAt pomdb.Timestamp `json:"created_at" pomdb:"created_at"`
   UpdatedAt pomdb.Timestamp `json:"updated_at" pomdb:"updated_at"`
   DeletedAt pomdb.Timestamp `json:"deleted_at" pomdb:"deleted_at"`
-  FullName  string          `json:"full_name" pomdb:"index"`
+  FirstName string          `json:"first_name" pomdb:"index"`
+  LastName  string          `json:"last_name" pomdb:"index"`
   Email     string          `json:"email" pomdb:"index,unique"`
   //...
 }
@@ -203,7 +208,8 @@ type User struct {
 ```json
 {
   "id": "01HS8Q7MVGA8CVCVVFYEH1VY2T",
-  "full_name": "John Pip",
+  "first_name": "John",
+  "last_name": "Pip",
   "email": "john.pip@zip.com",
   "created_at": 1711210960,
   "updated_at": 1711210960,
@@ -233,8 +239,9 @@ This method is used to create a new object in the database. `model` must be a po
 
 ```go
 user := User{
-  Name:  "John Pip",
-  Email: "john.pip@zip.com",
+  FirstName: "John",
+  LastName:  "Pip",
+  Email:     "john.pip@zip.com",
 }
 
 if err := client.Create(&user); err != nil {
@@ -249,7 +256,7 @@ This method is used to update an existing object in the database. `model` must b
 > **Equivalent to** `UPDATE users SET email = 'jane.pip@zip.com' WHERE id = '...'`
 
 ```go
-user.Email = "jane.pip@zip.com"
+user.Email = "john.pip@zap.com"
 
 if err := client.Update(&user); err != nil {
   log.Fatal(err)
@@ -278,7 +285,7 @@ This method is used to find a single object in the database using an index. The 
 query := pomdb.Query{
   Model:      User{},
   FieldName:  "email",
-  FieldValue: "jane.pip@zip.com",
+  FieldValue: "john.pip@zip.com",
 }
 
 res, err := client.FindOne(query)
@@ -298,9 +305,8 @@ This method is used to find multiple objects in the database using an index. The
 ```go
 query := pomdb.Query{
   Model:      User{},
-  FieldName:  "name",
-  FieldValue: "Doe",
-  Filter:      pomdb.QueryFlagContains,
+  FieldName:  "first_name",
+  FieldValue: "John",
 }
 
 res, err := client.FindMany(query)
@@ -372,107 +378,62 @@ if err := client.Purge(&user); err != nil {
 
 ## Working with Indexes
 
-Indexes are used to optimize queries. PomDB supports unique and non-unique indexes using the `pomdb:"index,unique"` and `pomdb:"index"` tags, respectively, and automatically maintains them when objects are created, updated, or deleted. Indexes can be found in S3 under the following path:
+Indexes are used to optimize queries. PomDB supports the following index types, and automatically maintains them when objects are created, updated, or deleted:
 
-```hbs
-{{$bucket}}/{{$collection}}/indexes/{{$field}}/{{$value}}
+### Index types
+
+#### `unique`
+
+Enforces uniqueness of the field's value across the collection. In the example, Any 'Email' field in 'User' structs will be indexed uniquely. PomDB ensures no two 'User' records have the same email.
+
+```go
+type User struct {
+  Email string `pomdb:"index,unique"` // Unique index on Email
+  // ...
+}
 ```
+> `S3 path: {{$bucket}}/{{$collection}}/indexes/unique/{{$field}}/{{$value}}/{{$ulid}}`
+
+#### `shared`
+
+Allows multiple records to share the same value for the indexed field. In the example, 'Category' is indexed non-uniquely, allowing aggregation and querying of 'Product' records by shared categories.
+
+```go
+type Product struct {
+  Category string `pomdb:"index"` // Shared index on Category
+  // ...
+}
+```
+> `S3 path: {{$bucket}}/{{$collection}}/indexes/shared/{{$field}}/{{$value}}/{{$[]ulid}}`
+
+#### `composite`
+
+Combines multiple fields into a single index for querying based on multiple criteria. In the example, Both 'CustomerID' and 'ProductID' are part of a composite index named 'OrderIndex', allowing queries involving both fields.
+
+```go
+type Order struct {
+  CustomerID string `pomdb:"index,composite=OrderIndex"`
+  ProductID  string `pomdb:"index,composite=OrderIndex"`
+  // ...
+}
+```
+> `S3 path: {{$bucket}}/{{$collection}}/indexes/composite/{{$field1}}/{{$value1}}/{{$field2}}/{{$value2}}/{{$[]ulid}}`
+
+#### `range`
+
+Facilitates queries within a range of values, like dates or numbers. In the example, 'Date' is indexed for range queries, allowing for queries like events happening within a certain time frame.
+
+```go
+type Event struct {
+  Date int64 `pomdb:"index,range"` // Range index on Date
+  // ...
+}
+```
+> `S3 path: {{$bucket}}/{{$collection}}/indexes/range/{{$field}}/{{$value}}/{{$[]ulid}}`
 
 ### Encoding strategy
 
 PomDB uses base64 encoding to store index values. This allows for a consistent and predictable way to store and retrieve objects, and ensures that the index keys are valid S3 object keys. The length of the index key is limited to 1024 bytes. If the encoded index key exceeds this limit, PomDB will return an error.
-
-### Query filters
-
-#### `QueryFlagEquals`
-
-This is the default filter, and is used to find objects where the field is equal to the specified value, e.g.:
-
-> **Equivalent to** `SELECT * FROM users WHERE email = 'john.pip@zip.com'`
-
-```go
-query := pomdb.Query{
-  Model:      User{},
-  FieldName:  "email",
-  FieldValue: "john.pip@zip.com",
-  Filter:     pomdb.QueryFlagEquals,
-}
-```
-
-#### `QueryFlagContains`
-
-This filter is used to find objects where the field contains the specified value, e.g.:
-
-> **Equivalent to** `SELECT * FROM users WHERE name LIKE '%Pip%'`
-
-```go
-query := pomdb.Query{
-  Model:      User{},
-  FieldName:  "name",
-  FieldValue: "Pip",
-  Filter:     pomdb.QueryFlagContains,
-}
-```
-
-#### `QueryFlagStartsWith`
-
-This filter is used to find objects where the field starts with the specified value, e.g.:
-
-> **Equivalent to** `SELECT * FROM users WHERE name LIKE 'John%'`
-
-```go
-query := pomdb.Query{
-  Model:      User{},
-  FieldName:  "name",
-  FieldValue: "John",
-  Filter:     pomdb.QueryFlagStartsWith,
-}
-```
-
-#### `QueryFlagEndsWith`
-
-This filter is used to find objects where the field ends with the specified value, e.g.:
-
-> **Equivalent to** `SELECT * FROM users WHERE name LIKE '%Pip'`
-
-```go
-query := pomdb.Query{
-  Model:      User{},
-  FieldName:  "name",
-  FieldValue: "Pip",
-  Filter:     pomdb.QueryFlagEndsWith,
-}
-```
-
-#### `QueryFlagGreaterThan`
-
-This filter is used to find objects where the field is greater than the specified value, e.g.:
-
-> **Equivalent to** `SELECT * FROM users WHERE age > 21`
-
-```go
-query := pomdb.Query{
-  Model:      User{},
-  FieldName:  "age",
-  FieldValue: 21,
-  Filter:     pomdb.QueryFlagGreaterThan,
-}
-```
-
-#### `QueryFlagLessThan`
-
-This filter is used to find objects where the field is less than the specified value, e.g.:
-
-> **Equivalent to** `SELECT * FROM users WHERE age < 21`
-
-```go
-query := pomdb.Query{
-  Model:      User{},
-  FieldName:  "age",
-  FieldValue: 21,
-  Filter:     pomdb.QueryFlagLessThan,
-}
-```
 
 ## Pagination
 
@@ -483,7 +444,6 @@ PomDB supports pagination using the `Limit` and `Token` fields of the query. The
 query := pomdb.Query{
   Model: User{},
   Limit: 10,
-  Token: "",
 }
 
 res, err := client.FindAll(query)
