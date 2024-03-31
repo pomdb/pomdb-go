@@ -392,7 +392,7 @@ type User struct {
   // ...
 }
 ```
-> **Location** `{{$bucket}}/{{$collection}}/indexes/unique/{{$field}}/{{$value}}/{{$ulid}}`
+> **Location**: `/{{$collection}}/indexes/unique/{{$field}}/{{$value}}/{{$ulid}}`
 
 #### `shared`
 
@@ -404,7 +404,7 @@ type Product struct {
   // ...
 }
 ```
-> **Location** `{{$bucket}}/{{$collection}}/indexes/shared/{{$field}}/{{$value}}/{{$[]ulid}}`
+> **Location**: `/{{$collection}}/indexes/shared/{{$field}}/{{$value}}/{{$[]ulid}}`
 
 #### `composite`
 
@@ -417,7 +417,7 @@ type Order struct {
   // ...
 }
 ```
-> **Location** `{{$bucket}}/{{$collection}}/indexes/composite/{{$field1}}/{{$value1}}/{{$field2}}/{{$value2}}/{{$[]ulid}}`
+> **Location**: `/{{$collection}}/indexes/composite/{{$field1}}/{{$value1}}/{{$field2}}/{{$value2}}/{{$[]ulid}}`
 
 #### `range`
 
@@ -429,7 +429,7 @@ type Event struct {
   // ...
 }
 ```
-> **Location** `{{$bucket}}/{{$collection}}/indexes/range/{{$field}}/{{$value}}/{{$[]ulid}}`
+> **Location**: `/{{$collection}}/indexes/range/{{$field}}/{{$value}}/{{$[]ulid}}`
 
 ### Encoding strategy
 
