@@ -16,9 +16,7 @@ type FindAllResult struct {
 	NextToken string
 }
 
-// FindAll returns all objects of a given collection. It returns an empty Docs
-// slice if no objects are found, so it's safe to iterate over the results
-// without checking for nil.
+// FindAll returns all objects of a given collection.
 func (c *Client) FindAll(q Query) (*FindAllResult, error) {
 	// Set default limit
 	if q.Limit == 0 {

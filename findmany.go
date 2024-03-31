@@ -17,9 +17,7 @@ type FindManyResult struct {
 	NextToken string
 }
 
-// FindMany returns all objects of a given collection that match the query. It
-// returns an empty Docs slice if no objects are found, so it's safe to iterate
-// over the results without checking for nil.
+// FindMany retrieves multiple objects of a given index.
 func (c *Client) FindMany(q Query) (*FindManyResult, error) {
 	if q.Field == "id" {
 		return nil, fmt.Errorf("FindMany: cannot search by id")

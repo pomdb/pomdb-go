@@ -12,8 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 )
 
-// FindOne finds a single record in the database. It returns an error if the
-// record is not found.
+// FindOne retrieves a single object of a given collection or index.
 func (c *Client) FindOne(q Query) (interface{}, error) {
 	target := "record"
 	if q.Field != "id" {
