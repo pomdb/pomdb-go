@@ -41,51 +41,44 @@ func NewModelCache(rv reflect.Value) *ModelCache {
 		mc.UpdatedAt = getFieldByName(rv, "UpdatedAt")
 		mc.DeletedAt = getFieldByName(rv, "DeletedAt")
 	} else {
-		// Look for user-defined fields with pomdb tags
-		typ := rv.Type()
+
 		for j := 0; j < rv.NumField(); j++ {
-			field := rv.Field(j)
-			fieldType := typ.Field(j)
-			tagValue := fieldType.Tag.Get("pomdb")
+			vpntr := rv.Field(j)
+			value := rv.Field(j).String()
+			fpntr := rv.Type().Field(j)
+			pmtag := fpntr.Tag.Get("pomdb")
+			jstag := fpntr.Tag.Get("json")
 
-			if tagContains(tagValue, []string{"id"}) {
-				mc.ModelID = &field
+			// Set managed fields
+			if tagContains(pmtag, []string{"id"}) {
+				mc.ModelID = &vpntr
 			}
-			if tagContains(tagValue, []string{"created_at"}) {
-				mc.CreatedAt = &field
+			if tagContains(pmtag, []string{"created_at"}) {
+				mc.CreatedAt = &vpntr
 			}
-			if tagContains(tagValue, []string{"updated_at"}) {
-				mc.UpdatedAt = &field
+			if tagContains(pmtag, []string{"updated_at"}) {
+				mc.UpdatedAt = &vpntr
 			}
-			if tagContains(tagValue, []string{"deleted_at"}) {
-				mc.DeletedAt = &field
+			if tagContains(pmtag, []string{"deleted_at"}) {
+				mc.DeletedAt = &vpntr
 			}
-		}
-	}
 
-	for j := 0; j < rv.NumField(); j++ {
-		field := rv.Type().Field(j)
-		value := rv.Field(j).String()
-
-		pmtag := field.Tag.Get("pomdb")
-		jstag := field.Tag.Get("json")
-
-		if tagContains(pmtag, []string{"unique", "index"}) {
-			mc.IndexFields = append(mc.IndexFields, IndexField{
-				FieldName:    jstag,
-				CurrentValue: value,
-				IsUnique:     true,
-			})
-
-			continue
-		}
-
-		if tagContains(pmtag, []string{"index"}) {
-			mc.IndexFields = append(mc.IndexFields, IndexField{
-				FieldName:    jstag,
-				CurrentValue: value,
-				IsUnique:     false,
-			})
+			// Collect index fields
+			if tagContains(pmtag, []string{"unique", "index"}) {
+				mc.IndexFields = append(mc.IndexFields, IndexField{
+					FieldName:    jstag,
+					CurrentValue: value,
+					IsUnique:     true,
+				})
+				continue
+			}
+			if tagContains(pmtag, []string{"index"}) {
+				mc.IndexFields = append(mc.IndexFields, IndexField{
+					FieldName:    jstag,
+					CurrentValue: value,
+					IsUnique:     false,
+				})
+			}
 		}
 	}
 
