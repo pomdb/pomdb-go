@@ -95,19 +95,21 @@ func getFieldByName(v reflect.Value, fieldName string) *reflect.Value {
 	return nil
 }
 
-// tagContains checks if the tag string contains all the values in the provided slice.
-func tagContains(tagValue string, values []string) bool {
+// tagContains checks if the tag string contains all the keys in the provided slice.
+// It supports both simple tags and key-value pairs.
+func tagContains(tagValue string, keys []string) bool {
 	tags := strings.Split(tagValue, ",")
 
-	// Create a map for quick lookup
+	// Create a map for quick lookup of keys
 	tagMap := make(map[string]bool)
 	for _, tag := range tags {
-		tagMap[strings.TrimSpace(tag)] = true
+		key := strings.SplitN(strings.TrimSpace(tag), "=", 2)[0]
+		tagMap[key] = true
 	}
 
-	// Check if all values are present
-	for _, value := range values {
-		if _, exists := tagMap[value]; !exists {
+	// Check if all of the specified keys are present
+	for _, key := range keys {
+		if _, exists := tagMap[key]; !exists {
 			return false
 		}
 	}
