@@ -8,8 +8,8 @@ import (
 
 type User struct {
 	pomdb.Model
-	FirstName string `json:"first_name" pomdb:"index"`
-	LastName  string `json:"last_name" pomdb:"index"`
+	FirstName string `json:"first_name" pomdb:"index,composite=full_name"`
+	LastName  string `json:"last_name" pomdb:"index,composite=full_name"`
 	Email     string `json:"email" pomdb:"index,unique"`
 	Phone     string `json:"phone" pomdb:"index,unique"`
 }
@@ -50,12 +50,12 @@ func main() {
 
 	// log.Printf("updated user with ETag: %s", *upt)
 
-	del, err := client.Delete(&user)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// del, err := client.Delete(&user)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	log.Printf("deleted data for ID: %s", *del)
+	// log.Printf("deleted data for ID: %s", *del)
 
 	// res, err := client.Restore(&user)
 	// if err != nil {
@@ -104,19 +104,19 @@ func main() {
 
 	// log.Printf("FindMany: found %d users", len(users))
 
-	query := pomdb.Query{
-		Model: &User{},
-	}
+	// query := pomdb.Query{
+	// 	Model: &User{},
+	// }
 
-	res, err := client.FindAll(query)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// res, err := client.FindAll(query)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	users := make([]*User, len(res.Docs))
-	for i, user := range res.Docs {
-		users[i] = user.(*User)
-	}
+	// users := make([]*User, len(res.Docs))
+	// for i, user := range res.Docs {
+	// 	users[i] = user.(*User)
+	// }
 
-	log.Printf("FindAll: found %d users", len(users))
+	// log.Printf("FindAll: found %d users", len(users))
 }

@@ -43,8 +43,23 @@ func (c *Client) FindMany(q Query) (*FindManyResult, error) {
 	// Build the struct cache
 	ca := NewModelCache(rv)
 
+	// Get the collection name
+	col := ca.Collection
+
+	// Get the index field
+	var idx *IndexField
+	for _, i := range ca.IndexFields {
+		if i.IndexName == q.Field {
+			idx = &i
+			break
+		}
+	}
+	if idx == nil {
+		return nil, fmt.Errorf("FindMany: index field %s not found", q.Field)
+	}
+
 	// Set index pfx path
-	pfx, err := encodeIndexPrefix(ca.Collection, q.Field, q.Value, false)
+	pfx, err := encodeIndexPrefix(col, idx.CurrValues, idx.IndexType)
 	if err != nil {
 		return nil, err
 	}

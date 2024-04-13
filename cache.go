@@ -9,16 +9,24 @@ import (
 	"github.com/iancoleman/strcase"
 )
 
+type IndexType int
+
+const (
+	UniqueIndex IndexType = iota
+	SharedIndex
+	CompositeIndex
+)
+
 type IndexField struct {
-	FieldName     string
-	CurrentValue  string
-	PreviousValue string
-	IsUnique      bool
+	IndexName  string
+	CurrValues map[string]string
+	PrevValues map[string]string
+	IndexType  IndexType
 }
 
 type ModelCache struct {
 	ModelID     *reflect.Value
-	IndexFields []IndexField
+	IndexFields map[string]IndexField
 	CreatedAt   *reflect.Value
 	UpdatedAt   *reflect.Value
 	DeletedAt   *reflect.Value
@@ -26,7 +34,9 @@ type ModelCache struct {
 }
 
 func NewModelCache(rv reflect.Value) *ModelCache {
-	mc := &ModelCache{}
+	mc := &ModelCache{
+		IndexFields: make(map[string]IndexField),
+	}
 
 	// Get the collection name
 	mc.Collection = pluralize.NewClient().Plural(strcase.ToSnake(rv.Type().Name()))
@@ -44,10 +54,8 @@ func NewModelCache(rv reflect.Value) *ModelCache {
 
 		for j := 0; j < rv.NumField(); j++ {
 			vpntr := rv.Field(j)
-			value := rv.Field(j).String()
 			fpntr := rv.Type().Field(j)
 			pmtag := fpntr.Tag.Get("pomdb")
-			jstag := fpntr.Tag.Get("json")
 
 			// Set managed fields
 			if tagContains(pmtag, []string{"id"}) {
@@ -62,22 +70,45 @@ func NewModelCache(rv reflect.Value) *ModelCache {
 			if tagContains(pmtag, []string{"deleted_at"}) {
 				mc.DeletedAt = &vpntr
 			}
+		}
+	}
 
-			// Collect index fields
-			if tagContains(pmtag, []string{"unique", "index"}) {
-				mc.IndexFields = append(mc.IndexFields, IndexField{
-					FieldName:    jstag,
-					CurrentValue: value,
-					IsUnique:     true,
-				})
-				continue
+	for j := 0; j < rv.NumField(); j++ {
+		value := rv.Field(j).String()
+		fpntr := rv.Type().Field(j)
+		pmtag := fpntr.Tag.Get("pomdb")
+		jstag := fpntr.Tag.Get("json")
+
+		// Collect index fields
+		if tagContains(pmtag, []string{"composite", "index"}) {
+			name := getCompositeIndexName(pmtag)
+
+			if _, ok := mc.IndexFields[name]; !ok {
+				mc.IndexFields[name] = IndexField{
+					IndexName:  name,
+					CurrValues: map[string]string{jstag: value},
+					IndexType:  CompositeIndex,
+				}
+			} else {
+				mc.IndexFields[name].CurrValues[jstag] = value
 			}
-			if tagContains(pmtag, []string{"index"}) {
-				mc.IndexFields = append(mc.IndexFields, IndexField{
-					FieldName:    jstag,
-					CurrentValue: value,
-					IsUnique:     false,
-				})
+
+			continue
+		}
+		if tagContains(pmtag, []string{"unique", "index"}) {
+			mc.IndexFields[jstag] = IndexField{
+				IndexName:  jstag,
+				CurrValues: map[string]string{jstag: value},
+				IndexType:  UniqueIndex,
+			}
+
+			continue
+		}
+		if tagContains(pmtag, []string{"index"}) {
+			mc.IndexFields[jstag] = IndexField{
+				IndexName:  jstag,
+				CurrValues: map[string]string{jstag: value},
+				IndexType:  SharedIndex,
 			}
 		}
 	}
@@ -119,17 +150,33 @@ func (mc *ModelCache) SetDeletedAt() {
 	}
 }
 
-// CompareIndexFields compares the index fields in the cache to the input.
+// CompareIndexFields compares the index fields in the cache to the input,
+// where 'i' is expected to be a map or a struct representing the previous
+// state
 func (mc *ModelCache) CompareIndexFields(i interface{}) bool {
 	rv := reflect.ValueOf(i) // represents a map
-
 	diff := false
-	for k, index := range mc.IndexFields {
-		value := fmt.Sprintf("%v", rv.MapIndex(reflect.ValueOf(index.FieldName)).Interface())
 
-		if value != index.CurrentValue {
-			mc.IndexFields[k].PreviousValue = value
+	for k, index := range mc.IndexFields {
+		if index.IndexType == CompositeIndex {
+			for field, value := range index.CurrValues {
+				if value != fmt.Sprintf("%v", rv.MapIndex(reflect.ValueOf(field)).Interface()) {
+					mc.IndexFields[k].PrevValues[field] = value
+				}
+			}
+			continue
+		}
+
+		value := fmt.Sprintf("%v", rv.MapIndex(reflect.ValueOf(index.IndexName)).Interface())
+		if value != index.CurrValues[index.IndexName] {
+			mc.IndexFields[k].PrevValues[index.IndexName] = index.CurrValues[index.IndexName]
+		}
+	}
+
+	for _, index := range mc.IndexFields {
+		if len(index.PrevValues) > 0 {
 			diff = true
+			break
 		}
 	}
 

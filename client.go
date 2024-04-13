@@ -55,10 +55,11 @@ func (c *Client) CheckBucket() error {
 
 // CheckIndexExists checks if an index item exists in the given collection.
 func (c *Client) CheckIndexExists(ca *ModelCache) error {
-	for _, index := range ca.IndexFields {
-		if index.IsUnique {
+	col := ca.Collection
+	for _, idx := range ca.IndexFields {
+		if idx.IndexType == UniqueIndex {
 			// Create the pfx path for the index item
-			pfx, err := encodeIndexPrefix(ca.Collection, index.FieldName, index.CurrentValue, index.IsUnique)
+			pfx, err := encodeIndexPrefix(col, idx.CurrValues, idx.IndexType)
 			if err != nil {
 				return err
 			}
@@ -78,7 +79,7 @@ func (c *Client) CheckIndexExists(ca *ModelCache) error {
 			}
 
 			if len(res.Contents) > 0 {
-				return fmt.Errorf("[Error] CheckIndexExists: index %s with value %s already exists", index.FieldName, index.CurrentValue)
+				return fmt.Errorf("[Error] CheckIndexExists: index %s with value %s already exists", idx.IndexName, idx.CurrValues[idx.IndexName])
 			}
 		}
 	}
@@ -88,20 +89,21 @@ func (c *Client) CheckIndexExists(ca *ModelCache) error {
 
 // CreateIndexItems creates an index item in the given collection.
 func (c *Client) CreateIndexItems(ca *ModelCache) error {
-	id := ca.ModelID.Interface().(ULID).String()
+	uid := ca.GetModelID()
+	col := ca.Collection
 
-	for _, index := range ca.IndexFields {
-		log.Printf("CreateIndexItem: collection=%s, indexField=%v", ca.Collection, index)
+	for _, idx := range ca.IndexFields {
+		log.Printf("CreateIndexItem: collection=%s, indexField=%v", col, idx)
 
 		// Create the pfx path for the index item
-		pfx, err := encodeIndexPrefix(ca.Collection, index.FieldName, index.CurrentValue, index.IsUnique)
+		pfx, err := encodeIndexPrefix(col, idx.CurrValues, idx.IndexType)
 		if err != nil {
 			return err
 		}
 
 		put := &s3.PutObjectInput{
 			Bucket: &c.Bucket,
-			Key:    aws.String(pfx + "/" + id),
+			Key:    aws.String(pfx + "/" + uid),
 		}
 
 		if _, err := c.Service.PutObject(context.TODO(), put); err != nil {
@@ -114,14 +116,15 @@ func (c *Client) CreateIndexItems(ca *ModelCache) error {
 
 // UpdateIndexItems updates index items in the given collection.
 func (c *Client) UpdateIndexItems(ca *ModelCache) error {
-	id := ca.ModelID.Interface().(ULID).String()
+	uid := ca.GetModelID()
+	col := ca.Collection
 
-	for _, index := range ca.IndexFields {
-		if index.PreviousValue != "" {
-			log.Printf("UpdateIndexItem: collection=%s, indexField=%v", ca.Collection, index)
+	for _, idx := range ca.IndexFields {
+		if len(idx.PrevValues) > 0 {
+			log.Printf("UpdateIndexItem: collection=%s, indexField=%v", col, idx)
 
 			// Create the key path for the old index item
-			oldPfx, err := encodeIndexPrefix(ca.Collection, index.FieldName, index.PreviousValue, index.IsUnique)
+			oldPfx, err := encodeIndexPrefix(col, idx.PrevValues, idx.IndexType)
 			if err != nil {
 				return err
 			}
@@ -129,7 +132,7 @@ func (c *Client) UpdateIndexItems(ca *ModelCache) error {
 			// Delete the old index item
 			del := &s3.DeleteObjectInput{
 				Bucket: &c.Bucket,
-				Key:    aws.String(oldPfx + "/" + id),
+				Key:    aws.String(oldPfx + "/" + uid),
 			}
 
 			if _, err := c.Service.DeleteObject(context.TODO(), del); err != nil {
@@ -137,14 +140,14 @@ func (c *Client) UpdateIndexItems(ca *ModelCache) error {
 			}
 
 			// Create the key path for the new index item
-			newPfx, err := encodeIndexPrefix(ca.Collection, index.FieldName, index.CurrentValue, index.IsUnique)
+			newPfx, err := encodeIndexPrefix(col, idx.CurrValues, idx.IndexType)
 			if err != nil {
 				return err
 			}
 
 			put := &s3.PutObjectInput{
 				Bucket: &c.Bucket,
-				Key:    aws.String(newPfx + "/" + id),
+				Key:    aws.String(newPfx + "/" + uid),
 			}
 
 			if _, err := c.Service.PutObject(context.TODO(), put); err != nil {
@@ -158,20 +161,21 @@ func (c *Client) UpdateIndexItems(ca *ModelCache) error {
 
 // DeleteIndexItems deletes index items in the given collection.
 func (c *Client) DeleteIndexItems(ca *ModelCache) error {
-	id := ca.ModelID.Interface().(ULID).String()
+	uid := ca.GetModelID()
+	col := ca.Collection
 
-	for _, index := range ca.IndexFields {
-		log.Printf("DeleteIndexItem: collection=%s, indexField=%v", ca.Collection, index)
+	for _, idx := range ca.IndexFields {
+		log.Printf("DeleteIndexItem: collection=%s, indexField=%v", col, idx)
 
 		// Create the pfx path for the index item
-		pfx, err := encodeIndexPrefix(ca.Collection, index.FieldName, index.CurrentValue, index.IsUnique)
+		pfx, err := encodeIndexPrefix(col, idx.CurrValues, idx.IndexType)
 		if err != nil {
 			return err
 		}
 
 		del := &s3.DeleteObjectInput{
 			Bucket: &c.Bucket,
-			Key:    aws.String(pfx + "/" + id),
+			Key:    aws.String(pfx + "/" + uid),
 		}
 
 		var notFound *types.NotFound
