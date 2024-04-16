@@ -510,6 +510,4 @@ var client = pomdb.Client{
 
 ## Roadmap
 
-- [ ] [:1234: Hexagonal spatial indexing](https://github.com/orgs/pomdb/projects/2/views/1?pane=issue&itemId=57483727)
-- [ ] [:mag_right: Support for joins and aggregations](https://github.com/orgs/pomdb/projects/2/views/1?pane=issue&itemId=57483736)
-- [ ] [:card_index_dividers: Versioning and data history](https://github.com/orgs/pomdb/projects/2/views/1?pane=issue&itemId=57483743)
+You can view the roadmap and feature requests on the [GitHub project page](https://github.com/orgs/pomdb/projects/2).
