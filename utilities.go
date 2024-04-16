@@ -118,40 +118,20 @@ func tagContains(tagValue string, keys []string) bool {
 }
 
 // encodeIndexPrefix returns the index path for the given field name and value.
-func encodeIndexPrefix(collection string, idxvals map[string]string, idxtype IndexType) (string, error) {
-	var pfx string
+func encodeIndexPrefix(collection, field, value string, idxtype IndexType) (string, error) {
+	// Encode the index field value in base64
+	code := base64.StdEncoding.EncodeToString([]byte(value))
+
+	if len(code) > 1024 {
+		return "", fmt.Errorf("[Error] encodeIndexPrefix: index %s with value %s is > 1024 bytes", field, value)
+	}
+
 	switch idxtype {
-	case SharedIndex:
-		pfx = collection + "/indexes/shared/"
 	case UniqueIndex:
-		pfx = collection + "/indexes/unique/"
-	case CompositeIndex:
-		pfx = collection + "/indexes/composite/"
+		return collection + "/indexes/unique/" + field + "/" + code, nil
+	case SharedIndex:
+		return collection + "/indexes/shared/" + field + "/" + code, nil
 	default:
-		pfx = collection + "/"
+		return "", errors.New("[Error] encodeIndexPrefix: invalid index type")
 	}
-
-	for key, val := range idxvals {
-		code := base64.StdEncoding.EncodeToString([]byte(val))
-		if len(code) > 1024 {
-			return "", fmt.Errorf("[Error] encodeIndexPrefix: index %s with value %s is > 1024 bytes", key, val)
-		}
-		pfx += key + "/" + code + "/"
-	}
-	pfx = strings.TrimRight(pfx, "/")
-
-	return pfx, nil
-}
-
-// getCompositeIndexName extracts the composite index name from the tag.
-func getCompositeIndexName(tagValue string) string {
-	tags := strings.Split(tagValue, ",")
-
-	for _, tag := range tags {
-		parts := strings.Split(strings.TrimSpace(tag), "=")
-		if len(parts) == 2 && parts[0] == "composite" {
-			return parts[1]
-		}
-	}
-	return ""
 }

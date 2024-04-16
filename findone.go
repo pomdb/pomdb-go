@@ -31,24 +31,24 @@ func (c *Client) FindOne(q Query) (interface{}, error) {
 	// Get the collection
 	col := ca.Collection
 
-	// Get the index field
-	var idx *IndexField
-	for _, i := range ca.IndexFields {
-		if i.IndexName == q.Field {
-			idx = &i
-			break
-		}
-	}
-	if idx == nil {
-		return nil, fmt.Errorf("FindOne: index field %s not found", q.Field)
-	}
-
 	// Set record key path
 	key := col + "/" + q.Value
 
 	if target == "index" {
-		// Set index key path
-		pfx, err := encodeIndexPrefix(col, idx.CurrValues, idx.IndexType)
+		// Get the index field
+		var idx *IndexField
+		for _, i := range ca.IndexFields {
+			if i.FieldName == q.Field {
+				idx = &i
+				break
+			}
+		}
+		if idx == nil {
+			return nil, fmt.Errorf("FindOne: index field %s not found", q.Field)
+		}
+
+		// Set index pfx path
+		pfx, err := encodeIndexPrefix(ca.Collection, q.Field, q.Value, idx.IndexType)
 		if err != nil {
 			return nil, err
 		}

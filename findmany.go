@@ -43,13 +43,10 @@ func (c *Client) FindMany(q Query) (*FindManyResult, error) {
 	// Build the struct cache
 	ca := NewModelCache(rv)
 
-	// Get the collection name
-	col := ca.Collection
-
 	// Get the index field
 	var idx *IndexField
 	for _, i := range ca.IndexFields {
-		if i.IndexName == q.Field {
+		if i.FieldName == q.Field {
 			idx = &i
 			break
 		}
@@ -59,7 +56,7 @@ func (c *Client) FindMany(q Query) (*FindManyResult, error) {
 	}
 
 	// Set index pfx path
-	pfx, err := encodeIndexPrefix(col, idx.CurrValues, idx.IndexType)
+	pfx, err := encodeIndexPrefix(ca.Collection, q.Field, q.Value, idx.IndexType)
 	if err != nil {
 		return nil, err
 	}

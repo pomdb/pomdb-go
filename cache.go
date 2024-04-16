@@ -14,19 +14,19 @@ type IndexType int
 const (
 	UniqueIndex IndexType = iota
 	SharedIndex
-	CompositeIndex
+	RangedIndex
 )
 
 type IndexField struct {
-	IndexName  string
-	CurrValues map[string]string
-	PrevValues map[string]string
-	IndexType  IndexType
+	FieldName     string
+	CurrentValue  string
+	PreviousValue string
+	IndexType     IndexType
 }
 
 type ModelCache struct {
 	ModelID     *reflect.Value
-	IndexFields map[string]IndexField
+	IndexFields []IndexField
 	CreatedAt   *reflect.Value
 	UpdatedAt   *reflect.Value
 	DeletedAt   *reflect.Value
@@ -34,9 +34,7 @@ type ModelCache struct {
 }
 
 func NewModelCache(rv reflect.Value) *ModelCache {
-	mc := &ModelCache{
-		IndexFields: make(map[string]IndexField),
-	}
+	mc := &ModelCache{}
 
 	// Get the collection name
 	mc.Collection = pluralize.NewClient().Plural(strcase.ToSnake(rv.Type().Name()))
@@ -79,37 +77,21 @@ func NewModelCache(rv reflect.Value) *ModelCache {
 		pmtag := fpntr.Tag.Get("pomdb")
 		jstag := fpntr.Tag.Get("json")
 
-		// Collect index fields
-		if tagContains(pmtag, []string{"composite", "index"}) {
-			name := getCompositeIndexName(pmtag)
-
-			if _, ok := mc.IndexFields[name]; !ok {
-				mc.IndexFields[name] = IndexField{
-					IndexName:  name,
-					CurrValues: map[string]string{jstag: value},
-					IndexType:  CompositeIndex,
-				}
-			} else {
-				mc.IndexFields[name].CurrValues[jstag] = value
-			}
-
-			continue
-		}
 		if tagContains(pmtag, []string{"unique", "index"}) {
-			mc.IndexFields[jstag] = IndexField{
-				IndexName:  jstag,
-				CurrValues: map[string]string{jstag: value},
-				IndexType:  UniqueIndex,
-			}
+			mc.IndexFields = append(mc.IndexFields, IndexField{
+				FieldName:    jstag,
+				CurrentValue: value,
+				IndexType:    UniqueIndex,
+			})
 
 			continue
 		}
 		if tagContains(pmtag, []string{"index"}) {
-			mc.IndexFields[jstag] = IndexField{
-				IndexName:  jstag,
-				CurrValues: map[string]string{jstag: value},
-				IndexType:  SharedIndex,
-			}
+			mc.IndexFields = append(mc.IndexFields, IndexField{
+				FieldName:    jstag,
+				CurrentValue: value,
+				IndexType:    SharedIndex,
+			})
 		}
 	}
 
@@ -150,33 +132,17 @@ func (mc *ModelCache) SetDeletedAt() {
 	}
 }
 
-// CompareIndexFields compares the index fields in the cache to the input,
-// where 'i' is expected to be a map or a struct representing the previous
-// state
+// CompareIndexFields compares the index fields in the cache to the input.
 func (mc *ModelCache) CompareIndexFields(i interface{}) bool {
 	rv := reflect.ValueOf(i) // represents a map
+
 	diff := false
-
 	for k, index := range mc.IndexFields {
-		if index.IndexType == CompositeIndex {
-			for field, value := range index.CurrValues {
-				if value != fmt.Sprintf("%v", rv.MapIndex(reflect.ValueOf(field)).Interface()) {
-					mc.IndexFields[k].PrevValues[field] = value
-				}
-			}
-			continue
-		}
+		value := fmt.Sprintf("%v", rv.MapIndex(reflect.ValueOf(index.FieldName)).Interface())
 
-		value := fmt.Sprintf("%v", rv.MapIndex(reflect.ValueOf(index.IndexName)).Interface())
-		if value != index.CurrValues[index.IndexName] {
-			mc.IndexFields[k].PrevValues[index.IndexName] = index.CurrValues[index.IndexName]
-		}
-	}
-
-	for _, index := range mc.IndexFields {
-		if len(index.PrevValues) > 0 {
+		if value != index.CurrentValue {
+			mc.IndexFields[k].PreviousValue = value
 			diff = true
-			break
 		}
 	}
 

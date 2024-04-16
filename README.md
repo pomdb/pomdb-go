@@ -406,19 +406,6 @@ type Product struct {
 ```
 > **S3**: `/{{$col}}/indexes/shared/{{$fld}}/{{$val}}/{{$[]uid}}`
 
-#### `composite`
-
-Combines multiple fields into a single index for querying based on multiple criteria. In the example, both `CustomerID` and `ProductID` are part of a composite index named `OrderIndex`, allowing queries involving both fields.
-
-```go
-type Order struct {
-  CustomerID string `pomdb:"index,composite=OrderIndex"`
-  ProductID  string `pomdb:"index,composite=OrderIndex"`
-  // ...
-}
-```
-> **S3**: `/{{$col}}/indexes/composite/{{$fld1}}/{{$val1}}/{{$fld2}}/{{$val2}}/{{$[]uid}}`
-
 #### `range`
 
 Facilitates queries within a range of values, like dates or numbers. In the example, `Date` is indexed for range queries, allowing for queries like events happening within a certain time frame.
@@ -430,6 +417,30 @@ type Event struct {
 }
 ```
 > **S3**: `/{{$col}}/indexes/range/{{$fld}}/{{$val}}/{{$[]ulid}}`
+
+### Composite indexes
+
+Composite indexes are used to optimize queries that involve multiple fields. In the example, `Phone` and `Email` are indexed together as `PhoneEmail`, e.g., `1234567890#john.pip@zip.com`, allowing for queries that involve both fields. Composite indexes can be unique or shared:
+
+```go
+type User struct {
+  Phone      string `pomdb:"index"`
+  Email      string `pomdb:"index"`
+  PhoneEmail string `pomdb:"index"`
+  // ...
+}
+
+user := User{
+  Phone: "1234567890",
+  Email: "john.pip@zip.com",
+}
+
+user.PhoneEmail = fmt.Sprintf("%s#%s", user.Phone, user.Email)
+
+if err := client.Create(&user); err != nil {
+  log.Fatal(err)
+}
+```
 
 ### Encoding strategy
 
