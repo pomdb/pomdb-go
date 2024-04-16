@@ -420,26 +420,27 @@ type Event struct {
 
 ### Composite indexes
 
-Composite indexes are used to optimize queries that involve multiple fields. In the example, `Phone` and `Email` are indexed together as `PhoneEmail`, e.g., `1234567890#john.pip@zip.com`, allowing for queries that involve both fields. Composite indexes can be unique or shared:
+Composite indexes are used to optimize queries that involve multiple fields. In the example, `IPAddress` and `UserAgent` are indexed together as `IPAddressUserAgent`, allowing for queries that involve both fields. Composite indexes can be unique or shared, and are managed by the user:
 
 ```go
-type User struct {
-  Phone      string `pomdb:"index"`
-  Email      string `pomdb:"index"`
-  PhoneEmail string `pomdb:"index"`
+type Log struct {
+  IPAddress          string `pomdb:"index,unique"`
+  UserAgent          string `pomdb:"index"`
+  IPAddressUserAgent string `pomdb:"index,unique"`
   // ...
 }
 
-user := User{
-  Phone: "1234567890",
-  Email: "john.pip@zip.com",
+log := Log{
+  IPAddress: "172.40.53.24",
+  UserAgent: "Mozilla/5.0",
 }
 
-user.PhoneEmail = fmt.Sprintf("%s#%s", user.Phone, user.Email)
+log.IPAddressUserAgent = log.IPAddress +"#"+ log.UserAgent
 
-if err := client.Create(&user); err != nil {
+if err := client.Create(&log); err != nil {
   log.Fatal(err)
 }
+
 ```
 
 ### Encoding strategy
