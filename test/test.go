@@ -10,7 +10,6 @@ type User struct {
 	pomdb.Model
 	FirstName string `json:"first_name" pomdb:"index"`
 	LastName  string `json:"last_name" pomdb:"index"`
-	FullName  string `json:"full_name" pomdb:"index"`
 	Email     string `json:"email" pomdb:"index,unique"`
 	Phone     string `json:"phone" pomdb:"index,unique"`
 }

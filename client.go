@@ -56,6 +56,10 @@ func (c *Client) CheckBucket() error {
 // CheckIndexExists checks if an index item exists in the given collection.
 func (c *Client) CheckIndexExists(ca *ModelCache) error {
 	for _, index := range ca.IndexFields {
+		if index.CurrentValue == "" {
+			continue
+		}
+
 		if index.IndexType == UniqueIndex {
 			// Create the pfx path for the index item
 			pfx, err := encodeIndexPrefix(ca.Collection, index.FieldName, index.CurrentValue, index.IndexType)
@@ -91,6 +95,10 @@ func (c *Client) CreateIndexItems(ca *ModelCache) error {
 	id := ca.ModelID.Interface().(ULID).String()
 
 	for _, index := range ca.IndexFields {
+		if index.CurrentValue == "" {
+			continue
+		}
+
 		log.Printf("CreateIndexItem: collection=%s, indexField=%v", ca.Collection, index)
 
 		// Create the pfx path for the index item
@@ -117,6 +125,10 @@ func (c *Client) UpdateIndexItems(ca *ModelCache) error {
 	id := ca.ModelID.Interface().(ULID).String()
 
 	for _, index := range ca.IndexFields {
+		if index.CurrentValue == "" {
+			continue
+		}
+
 		if index.PreviousValue != "" {
 			log.Printf("UpdateIndexItem: collection=%s, indexField=%v", ca.Collection, index)
 
@@ -161,6 +173,10 @@ func (c *Client) DeleteIndexItems(ca *ModelCache) error {
 	id := ca.ModelID.Interface().(ULID).String()
 
 	for _, index := range ca.IndexFields {
+		if index.CurrentValue == "" {
+			continue
+		}
+
 		log.Printf("DeleteIndexItem: collection=%s, indexField=%v", ca.Collection, index)
 
 		// Create the pfx path for the index item

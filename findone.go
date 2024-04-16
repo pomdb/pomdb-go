@@ -28,11 +28,8 @@ func (c *Client) FindOne(q Query) (interface{}, error) {
 	// Build the struct cache
 	ca := NewModelCache(rv)
 
-	// Get the collection
-	col := ca.Collection
-
 	// Set record key path
-	key := col + "/" + q.Value
+	key := ca.Collection + "/" + q.Value
 
 	if target == "index" {
 		// Get the index field
@@ -65,18 +62,18 @@ func (c *Client) FindOne(q Query) (interface{}, error) {
 		}
 
 		if res.Contents == nil {
-			return nil, fmt.Errorf("FindOne: index not found: collection=%s, field=%s, value=%s", col, q.Field, q.Value)
+			return nil, fmt.Errorf("FindOne: index not found: collection=%s, field=%s, value=%s", ca.Collection, q.Field, q.Value)
 		}
 
 		if len(res.Contents) > 1 {
-			return nil, fmt.Errorf("FindOne: multiple records found: collection=%s, field=%s, value=%s", col, q.Field, q.Value)
+			return nil, fmt.Errorf("FindOne: multiple records found: collection=%s, field=%s, value=%s", ca.Collection, q.Field, q.Value)
 		}
 
 		// Get record id
 		uid := strings.TrimPrefix(*res.Contents[0].Key, pfx+"/")
 
 		// Set key path
-		key = col + "/" + uid
+		key = ca.Collection + "/" + uid
 	}
 
 	// Filter soft deletes
@@ -93,7 +90,7 @@ func (c *Client) FindOne(q Query) (interface{}, error) {
 
 		for _, t := range tags.TagSet {
 			if *t.Key == "DeletedAt" {
-				return nil, fmt.Errorf("FindOne: record not found: collection=%s, field=%s, value=%s", col, q.Field, q.Value)
+				return nil, fmt.Errorf("FindOne: record not found: collection=%s, field=%s, value=%s", ca.Collection, q.Field, q.Value)
 			}
 		}
 	}
@@ -107,7 +104,7 @@ func (c *Client) FindOne(q Query) (interface{}, error) {
 	var noSuchKey *types.NoSuchKey
 	rec, err := c.Service.GetObject(context.TODO(), get)
 	if err != nil && errors.As(err, &noSuchKey) {
-		return nil, fmt.Errorf("FindOne: record not found: collection=%s, field=%s, value=%s", col, q.Field, q.Value)
+		return nil, fmt.Errorf("FindOne: record not found: collection=%s, field=%s, value=%s", ca.Collection, q.Field, q.Value)
 	} else if err != nil {
 		return nil, err
 	}
