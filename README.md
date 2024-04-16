@@ -420,7 +420,7 @@ type Event struct {
 
 ### Composite indexes
 
-Composite indexes are used to optimize queries that involve multiple fields. In the example, `IPAddress` and `UserAgent` are indexed together as `IPAddressUserAgent`, allowing for queries that involve both fields. Composite indexes can be unique or shared, and are managed by the user:
+Composite indexes are used to optimize queries that involve multiple fields. In the example, `IPAddress` and `UserAgent` are indexed together as `IPAddressUserAgent`, allowing for queries that involve both fields. Composite indexes can be unique or shared, and are created by concatenating the field values with a delimiter, e.g. `IPAddress#UserAgent`:
 
 ```go
 type Log struct {
