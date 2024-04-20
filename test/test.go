@@ -2,16 +2,19 @@ package main
 
 import (
 	"log"
+	"time"
 
 	"github.com/pomdb/pomdb-go"
 )
 
 type User struct {
 	pomdb.Model
-	FirstName string `json:"first_name" pomdb:"index"`
-	LastName  string `json:"last_name" pomdb:"index"`
-	Email     string `json:"email" pomdb:"index,unique"`
-	Phone     string `json:"phone" pomdb:"index,unique"`
+	FirstName string          `json:"first_name" pomdb:"index"`
+	LastName  string          `json:"last_name" pomdb:"index"`
+	Birthday  pomdb.Timestamp `json:"birthday" pomdb:"ranged,index"`
+	Email     string          `json:"email" pomdb:"index,unique"`
+	Phone     string          `json:"phone" pomdb:"index,unique"`
+	Age       int             `json:"age" pomdb:"index,ranged"`
 }
 
 var client = pomdb.Client{
@@ -25,11 +28,15 @@ func main() {
 		log.Fatal(err)
 	}
 
+	bday := time.Date(1990, time.January, 1, 0, 0, 0, 0, time.UTC)
+
 	user := User{
 		FirstName: "John",
 		LastName:  "Pip",
 		Email:     "john.pip@zip.com",
 		Phone:     "1234567890",
+		Age:       30,
+		Birthday:  pomdb.Timestamp(bday),
 	}
 
 	crt, err := client.Create(&user)

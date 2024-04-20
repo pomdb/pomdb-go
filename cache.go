@@ -72,11 +72,26 @@ func NewModelCache(rv reflect.Value) *ModelCache {
 	}
 
 	for j := 0; j < rv.NumField(); j++ {
-		value := rv.Field(j).String()
-		fpntr := rv.Type().Field(j)
-		pmtag := fpntr.Tag.Get("pomdb")
-		jstag := fpntr.Tag.Get("json")
+		field := rv.Field(j)
+		ftype := rv.Type().Field(j)
+		pmtag := ftype.Tag.Get("pomdb")
+		jstag := ftype.Tag.Get("json")
 
+		value, err := stringifyFieldValue(field, ftype)
+		if err != nil {
+			log.Printf("[Error] NewModelCache: %v", err)
+			continue
+		}
+
+		if tagContains(pmtag, []string{"ranged", "index"}) {
+			mc.IndexFields = append(mc.IndexFields, IndexField{
+				FieldName:    jstag,
+				CurrentValue: value,
+				IndexType:    RangedIndex,
+			})
+
+			continue
+		}
 		if tagContains(pmtag, []string{"unique", "index"}) {
 			mc.IndexFields = append(mc.IndexFields, IndexField{
 				FieldName:    jstag,

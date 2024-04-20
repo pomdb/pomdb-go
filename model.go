@@ -3,6 +3,7 @@ package pomdb
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/oklog/ulid/v2"
@@ -86,12 +87,7 @@ func (ts *Timestamp) UnmarshalJSON(b []byte) error {
 
 // String returns the string representation of the Timestamp.
 func (t Timestamp) String() string {
-	mtv, err := time.Time(t).MarshalText()
-	if err != nil {
-		return ""
-	}
-
-	return string(mtv)
+	return fmt.Sprintf("%d", time.Time(t).Unix())
 }
 
 // IsNil returns true if the Timestamp is the zero value.

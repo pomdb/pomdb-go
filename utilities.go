@@ -127,6 +127,8 @@ func encodeIndexPrefix(collection, field, value string, idxtype IndexType) (stri
 	}
 
 	switch idxtype {
+	case RangedIndex:
+		return collection + "/indexes/ranged/" + field + "/" + code, nil
 	case UniqueIndex:
 		return collection + "/indexes/unique/" + field + "/" + code, nil
 	case SharedIndex:
@@ -134,4 +136,29 @@ func encodeIndexPrefix(collection, field, value string, idxtype IndexType) (stri
 	default:
 		return "", errors.New("[Error] encodeIndexPrefix: invalid index type")
 	}
+}
+
+func stringifyFieldValue(field reflect.Value, ftype reflect.StructField) (string, error) {
+	// Check if the field is embedded
+	if ftype.Anonymous {
+		return "", nil // Skip processing for embedded structs
+	}
+
+	// Example of handling Timestamp or other specific types
+	if ftype.Type.ConvertibleTo(reflect.TypeOf(Timestamp{})) {
+		ts := field.Interface().(Timestamp)
+		return ts.String(), nil
+	}
+
+	// Handle basic types
+	switch field.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
+		reflect.Float32, reflect.Float64:
+		return fmt.Sprintf("%v", field.Interface()), nil
+	case reflect.String:
+		return field.String(), nil
+	}
+
+	return "", fmt.Errorf("unsupported field type %s", ftype.Type)
 }
