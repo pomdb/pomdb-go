@@ -31,6 +31,7 @@ type ModelCache struct {
 	UpdatedAt   *reflect.Value
 	DeletedAt   *reflect.Value
 	Collection  string
+	Reference   interface{}
 }
 
 func NewModelCache(rv reflect.Value) *ModelCache {
@@ -41,6 +42,9 @@ func NewModelCache(rv reflect.Value) *ModelCache {
 
 	// Log the original and final names
 	log.Printf("Collection: %s -> %s", rv.Type().Name(), mc.Collection)
+
+	// Store a reference to the original struct
+	mc.Reference = reflect.New(rv.Type()).Interface()
 
 	if hasPomdbModel(rv) {
 		// Use fields from embedded pomdb.Model
@@ -73,11 +77,11 @@ func NewModelCache(rv reflect.Value) *ModelCache {
 
 	for j := 0; j < rv.NumField(); j++ {
 		field := rv.Field(j)
-		ftype := rv.Type().Field(j)
-		pmtag := ftype.Tag.Get("pomdb")
-		jstag := ftype.Tag.Get("json")
+		fpntr := rv.Type().Field(j)
+		pmtag := fpntr.Tag.Get("pomdb")
+		jstag := fpntr.Tag.Get("json")
 
-		value, err := stringifyFieldValue(field, ftype)
+		value, err := stringifyFieldValue(field, fpntr)
 		if err != nil {
 			log.Printf("[Error] NewModelCache: %v", err)
 			continue
@@ -148,15 +152,42 @@ func (mc *ModelCache) SetDeletedAt() {
 }
 
 // CompareIndexFields compares the index fields in the cache to the input.
-func (mc *ModelCache) CompareIndexFields(i interface{}) bool {
-	rv := reflect.ValueOf(i) // represents a map
+func (mc *ModelCache) CompareIndexFields(model interface{}) bool {
+	modval := reflect.ValueOf(model).Elem()
+	modtyp := modval.Type()
+
+	tagmap := make(map[string]string)
+	for i := 0; i < modtyp.NumField(); i++ {
+		field := modtyp.Field(i)
+		jstag := field.Tag.Get("json")
+		if jstag != "" {
+			tagmap[jstag] = field.Name
+		}
+	}
 
 	diff := false
 	for k, index := range mc.IndexFields {
-		value := fmt.Sprintf("%v", rv.MapIndex(reflect.ValueOf(index.FieldName)).Interface())
+		fldnme, ok := tagmap[index.FieldName]
+		if !ok {
+			log.Printf("json tag %s not found in model", index.FieldName)
+			continue
+		}
 
-		if value != index.CurrentValue {
-			mc.IndexFields[k].PreviousValue = value
+		fldval := modval.FieldByName(fldnme)
+		if !fldval.IsValid() {
+			log.Printf("field %s not found in model", fldnme)
+			continue
+		}
+
+		var newval string
+		if fldval.Type().AssignableTo(reflect.TypeOf(Timestamp{})) {
+			newval = fldval.Interface().(Timestamp).String()
+		} else {
+			newval = fmt.Sprintf("%v", fldval.Interface())
+		}
+
+		if newval != index.CurrentValue {
+			mc.IndexFields[k].PreviousValue = newval
 			diff = true
 		}
 	}

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"reflect"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
@@ -41,14 +42,15 @@ func (c *Client) Update(i interface{}) (*string, error) {
 	}
 
 	// Unmarshal the record
-	var rec interface{}
-	if err := json.NewDecoder(doc.Body).Decode(&rec); err != nil {
+	elem := reflect.TypeOf(ca.Reference).Elem()
+	model := reflect.New(elem).Interface()
+	if err := json.NewDecoder(doc.Body).Decode(&model); err != nil {
 		return nil, err
 	}
 
 	// Check/update indexes
 	if len(ca.IndexFields) > 0 {
-		if diff := ca.CompareIndexFields(rec); diff {
+		if diff := ca.CompareIndexFields(model); diff {
 			if err := c.CheckIndexExists(ca); err != nil {
 				return nil, err
 			}

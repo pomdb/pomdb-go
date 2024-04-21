@@ -35,8 +35,8 @@ func main() {
 		LastName:  "Pip",
 		Email:     "john.pip@zip.com",
 		Phone:     "1234567890",
-		Age:       30,
 		Birthday:  pomdb.Timestamp(bday),
+		Age:       30,
 	}
 
 	crt, err := client.Create(&user)
@@ -46,16 +46,20 @@ func main() {
 
 	log.Printf("created user with ETag: %s", *crt)
 
-	// user.FirstName = "Jane"
-	// user.Email = "jane.pip@zip.com"
-	// user.Phone = "0987654321"
+	bday = time.Date(1995, time.January, 1, 0, 0, 0, 0, time.UTC)
 
-	// upt, err := client.Update(&user)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+	user.FirstName = "Jane"
+	user.Email = "jane.pip@zip.com"
+	user.Phone = "0987654321"
+	user.Birthday = pomdb.Timestamp(bday)
+	user.Age = 25
 
-	// log.Printf("updated user with ETag: %s", *upt)
+	upt, err := client.Update(&user)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Printf("updated user with ETag: %s", *upt)
 
 	// del, err := client.Delete(&user)
 	// if err != nil {

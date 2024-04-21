@@ -109,7 +109,7 @@ func (c *Client) FindOne(q Query) (interface{}, error) {
 		return nil, err
 	}
 
-	elem := reflect.TypeOf(q.Model).Elem()
+	elem := reflect.TypeOf(ca.Reference).Elem()
 	model := reflect.New(elem).Interface()
 	err = json.NewDecoder(rec.Body).Decode(&model)
 	if err != nil {

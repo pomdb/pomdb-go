@@ -126,7 +126,7 @@ func (c *Client) FindMany(q Query) (*FindManyResult, error) {
 			return nil, err
 		}
 
-		elem := reflect.TypeOf(q.Model).Elem()
+		elem := reflect.TypeOf(ca.Reference).Elem()
 		model := reflect.New(elem).Interface()
 		err = json.NewDecoder(doc.Body).Decode(&model)
 		if err != nil {
