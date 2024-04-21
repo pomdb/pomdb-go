@@ -46,20 +46,20 @@ func main() {
 
 	log.Printf("created user with ETag: %s", *crt)
 
-	bday = time.Date(1995, time.January, 1, 0, 0, 0, 0, time.UTC)
+	// bday = time.Date(1995, time.January, 1, 0, 0, 0, 0, time.UTC)
 
-	user.FirstName = "Jane"
-	user.Email = "jane.pip@zip.com"
-	user.Phone = "0987654321"
-	user.Birthday = pomdb.Timestamp(bday)
-	user.Age = 25
+	// user.FirstName = "Jane"
+	// user.Email = "jane.pip@zip.com"
+	// user.Phone = "0987654321"
+	// user.Birthday = pomdb.Timestamp(bday)
+	// user.Age = 25
 
-	upt, err := client.Update(&user)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// upt, err := client.Update(&user)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	log.Printf("updated user with ETag: %s", *upt)
+	// log.Printf("updated user with ETag: %s", *upt)
 
 	// del, err := client.Delete(&user)
 	// if err != nil {
@@ -115,19 +115,19 @@ func main() {
 
 	// log.Printf("FindMany: found %d users", len(users))
 
-	// query := pomdb.Query{
-	// 	Model: &User{},
-	// }
+	query := pomdb.Query{
+		Model: &User{},
+	}
 
-	// res, err := client.FindAll(query)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+	res, err := client.FindAll(query)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	// users := make([]*User, len(res.Docs))
-	// for i, user := range res.Docs {
-	// 	users[i] = user.(*User)
-	// }
+	users := make([]*User, len(res.Docs))
+	for i, user := range res.Docs {
+		users[i] = user.(*User)
+	}
 
-	// log.Printf("FindAll: found %d users", len(users))
+	log.Printf("FindAll: found %d users", len(users))
 }
