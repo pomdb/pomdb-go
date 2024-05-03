@@ -283,9 +283,9 @@ This method is used to find a single object in the database using an index. The 
 
 ```go
 query := pomdb.Query{
-  Model:      User{},
-  FieldName:  "email",
-  FieldValue: "john.pip@zip.com",
+  Model: User{},
+  Field: "email",
+  Value: "john.pip@zip.com",
 }
 
 res, err := client.FindOne(query)
@@ -303,10 +303,12 @@ This method is used to find multiple objects in the database using an index. The
 > **Equivalent to** `SELECT * FROM users WHERE name LIKE '%Doe%'`
 
 ```go
+// Typical HR filter
 query := pomdb.Query{
-  Model:      User{},
-  FieldName:  "first_name",
-  FieldValue: "John",
+  Model:  User{},
+  Field:  "age",
+  Filter: pomdb.QueryGreaterThan,
+  Value:  []string{"40"},
 }
 
 res, err := client.FindMany(query)
@@ -392,7 +394,7 @@ type User struct {
   // ...
 }
 ```
-> **S3**: `/{{$col}}/indexes/unique/{{$fld}}/{{$val}}/{{$uid}}`
+> **S3**: `/{{$col}}/indexes/unique/{{$fld}}/{{$val}}/{{$ulid}}`
 
 #### `shared`
 
@@ -404,19 +406,19 @@ type Product struct {
   // ...
 }
 ```
-> **S3**: `/{{$col}}/indexes/shared/{{$fld}}/{{$val}}/{{$[]uid}}`
+> **S3**: `/{{$col}}/indexes/shared/{{$fld}}/{{$val}}/{{$[]ulid}}`
 
-#### `range`
+#### `ranged`
 
-Facilitates queries within a range of values, like dates or numbers. In the example, `Date` is indexed for range queries, allowing for queries like events happening within a certain time frame.
+Facilitates queries within a range of values, like dates or numbers. In the example, `Date` is indexed for ranged queries, allowing for queries like events happening within a certain time frame.
 
 ```go
 type Event struct {
-  Date int64 `pomdb:"index,range"` // Range index on Date
+  Birthday pomdb.Timstamp `pomdb:"index,range"` // Range index on Date
   // ...
 }
 ```
-> **S3**: `/{{$col}}/indexes/range/{{$fld}}/{{$val}}/{{$[]ulid}}`
+> **S3**: `/{{$col}}/indexes/ranged/{{$fld}}/{{$val}}/{{$[]ulid}}`
 
 ### Composite indexes
 

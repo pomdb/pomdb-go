@@ -30,8 +30,8 @@ func (c *Client) FindMany(q Query) (*FindManyResult, error) {
 
 	// Set the page token
 	var token *string
-	if q.Token != "" {
-		token = &q.Token
+	if q.NextToken != "" {
+		token = &q.NextToken
 	}
 
 	// Dereference q.Model

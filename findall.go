@@ -25,8 +25,8 @@ func (c *Client) FindAll(q Query) (*FindAllResult, error) {
 
 	// Set the page token
 	var token *string
-	if q.Token != "" {
-		token = &q.Token
+	if q.NextToken != "" {
+		token = &q.NextToken
 	}
 
 	// Dereference q.Model
