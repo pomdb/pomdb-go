@@ -451,7 +451,7 @@ PomDB uses base64 encoding to store index values. This allows for a consistent a
 
 ## Pagination
 
-PomDB supports pagination using the `Limit` and `Token` fields of the query. The `Limit` field is used to specify the maximum number of objects to return per page, and the `Token` field is used to specify the starting point for the next page. If there are more objects to return, PomDB will set the `NextToken` field of the response. If there are no more objects to return, `NextToken` will be an empty string:
+PomDB supports pagination using the `Limit` and `NextToken` fields of the query. The `Limit` field is used to specify the maximum number of objects to return per page, and the `NextToken` field is used to specify the starting point for the next page. If there are more objects to return, PomDB will set the `NextToken` field of the response. If there are no more objects to return, `NextToken` will be an empty string:
 
 
 ```go
@@ -470,7 +470,7 @@ for res.NextToken != "" {
     // ...
   }
 
-  query.Token = res.NextToken
+  query.NextToken = res.NextToken
   res, err = client.FindAll(query)
   if err != nil {
     log.Fatal(err)
