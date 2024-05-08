@@ -15,6 +15,7 @@
 </div>
 
 <!-- table of contents with emojis, top level headings only -->
+
 ## Table of Contents
 
 - [:rocket: Feature Highlights](#feature-highlights)
@@ -118,6 +119,7 @@ func main() {
 Models are used to manage the structure of objects stored in collections. Models are defined using structs, with `json` tags to serialize the data. When embedding the `pomdb.Model` struct, its fields are automatically added to your model. You can choose to omit these fields, or define them manually. If you choose to define them manually, they must use the same names, types, and tags as the fields defined by PomDB:
 
 > embedding `pomdb.Model`
+
 ```go
 type User struct {
   pomdb.Model
@@ -127,6 +129,7 @@ type User struct {
 ```
 
 > or, defining fields manually
+
 ```go
 type User struct {
   ID        pomdb.ULID      `json:"id" pomdb:"id"`
@@ -143,6 +146,7 @@ type User struct {
 PomDB automatically generates a Universally Unique Lexicographically Sortable Identifer ([ULID](https://github.com/ulid/spec?tab=readme-ov-file)) for each object stored in the database. IDs are stored in the `ID` field of the struct, and serialized to the `id` attribute in the json output. Models must embed the `pomdb.Model` struct, or define an `ID` field of type `pomdb.ULID`:
 
 > embedding `pomdb.Model`
+
 ```go
 type User struct {
   pomdb.Model
@@ -153,6 +157,7 @@ type User struct {
 ```
 
 > or, defining `ID` field manually
+
 ```go
 type User struct {
   ID        pomdb.ULID `json:"id" pomdb:"id"`
@@ -164,6 +169,7 @@ type User struct {
 ```
 
 > serializes to:
+
 ```json
 {
   "id": "01HS8Q7MVGA8CVCVVFYEH1VY2T",
@@ -181,6 +187,7 @@ type User struct {
 Timestamps are used to track when objects are created, updated, and deleted. The native `time.Time` type is used to represent timestamps, and is automatically converted to and from Unix time. Fields with the `created_at`, `updated_at`, and `deleted_at` tags are automatically updated by PomDB:
 
 > embedding `pomdb.Model`
+
 ```go
 type User struct {
   pomdb.Model
@@ -191,6 +198,7 @@ type User struct {
 ```
 
 > or, defining timestamps manually
+
 ```go
 type User struct {
   ID        pomdb.ULID      `json:"id" pomdb:"id"`
@@ -205,6 +213,7 @@ type User struct {
 ```
 
 > serializes to:
+
 ```json
 {
   "id": "01HS8Q7MVGA8CVCVVFYEH1VY2T",
@@ -394,6 +403,7 @@ type User struct {
   // ...
 }
 ```
+
 > **S3**: `/{{$col}}/indexes/unique/{{$fld}}/{{$val}}/{{$ulid}}`
 
 #### `shared`
@@ -406,6 +416,7 @@ type Product struct {
   // ...
 }
 ```
+
 > **S3**: `/{{$col}}/indexes/shared/{{$fld}}/{{$val}}/{{$[]ulid}}`
 
 #### `ranged`
@@ -418,6 +429,7 @@ type Event struct {
   // ...
 }
 ```
+
 > **S3**: `/{{$col}}/indexes/ranged/{{$fld}}/{{$val}}/{{$[]ulid}}`
 
 ### Composite indexes
@@ -452,7 +464,6 @@ PomDB uses base64 encoding to store index values. This allows for a consistent a
 ## Pagination
 
 PomDB supports pagination using the `Limit` and `NextToken` fields of the query. The `Limit` field is used to specify the maximum number of objects to return per page, and the `NextToken` field is used to specify the starting point for the next page. If there are more objects to return, PomDB will set the `NextToken` field of the response. If there are no more objects to return, `NextToken` will be an empty string:
-
 
 ```go
 query := pomdb.Query{

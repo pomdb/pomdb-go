@@ -111,6 +111,26 @@ func (c *Client) FindMany(q Query) (*FindManyResult, error) {
 		return &FindManyResult{}, nil
 	}
 
+	// Run query filters
+	if q.Filter != nil {
+		var contents []types.Object
+
+		filter := q.GetHandler()
+
+		for _, o := range pge.Contents {
+			if res := filter(o); res {
+				contents = append(contents, o)
+			}
+		}
+
+		pge.Contents = contents
+	}
+
+	// Check for no results
+	if len(pge.Contents) == 0 {
+		return &FindManyResult{}, nil
+	}
+
 	// Fetch the documents
 	var docs []interface{}
 	for _, o := range pge.Contents {

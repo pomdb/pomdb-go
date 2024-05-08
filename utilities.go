@@ -138,6 +138,20 @@ func encodeIndexPrefix(collection, field, value string, idxtype IndexType) (stri
 	}
 }
 
+// decodeIndexPrefix returns the decoded value for the given index path.
+func decodeIndexPrefix(path string) (string, error) {
+	// Remove the collection prefix
+	path = strings.TrimPrefix(path, "/indexes/")
+
+	// Decode the base64 encoded value
+	decoded, err := base64.StdEncoding.DecodeString(path)
+	if err != nil {
+		return "", fmt.Errorf("[Error] decodeIndexPrefix: %v", err)
+	}
+
+	return string(decoded), nil
+}
+
 func stringifyFieldValue(field reflect.Value, ftype reflect.StructField) (string, error) {
 	// Check if the field is embedded
 	if ftype.Anonymous {
