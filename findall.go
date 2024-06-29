@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"reflect"
 	"strings"
+	"sync"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -23,12 +24,6 @@ func (c *Client) FindAll(q Query) (*FindAllResult, error) {
 		q.Limit = QueryLimitDefault
 	}
 
-	// Set the page token
-	var token *string
-	if q.NextToken != "" {
-		token = &q.NextToken
-	}
-
 	// Dereference q.Model
 	rv, err := dereferenceStruct(q.Model)
 	if err != nil {
@@ -38,40 +33,63 @@ func (c *Client) FindAll(q Query) (*FindAllResult, error) {
 	// Build the struct cache
 	ca := NewModelCache(rv)
 
-	// Set record pfx path
+	// Set record prefix path
 	pfx := ca.Collection + "/"
 
-	lst := &s3.ListObjectsV2Input{
-		Bucket:    &c.Bucket,
-		Prefix:    &pfx,
-		MaxKeys:   &q.Limit,
-		Delimiter: aws.String("/"),
+	// List all objects concurrently
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	var allObjects []types.Object
+	var startAfter *string
+
+	// If the query includes a next token, use it as the starting point
+	if q.NextToken != "" {
+		startAfter = &q.NextToken
 	}
 
-	if token != nil {
-		lst.ContinuationToken = token
-	}
-
-	// Fetch the first pge of objects
-	pge, err := c.Service.ListObjectsV2(context.TODO(), lst)
-	if err != nil {
-		return nil, err
-	}
-
-	// Filter out directories
-	var contents []types.Object
-	for _, obj := range pge.Contents {
-		if strings.HasSuffix(*obj.Key, "/") {
-			continue
+	for {
+		lst := &s3.ListObjectsV2Input{
+			Bucket:     &c.Bucket,
+			Prefix:     &pfx,
+			StartAfter: startAfter,
+			Delimiter:  aws.String("/"), // Ensures directories are handled correctly
 		}
 
-		contents = append(contents, obj)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			pge, err := c.Service.ListObjectsV2(context.TODO(), lst)
+			if err != nil {
+				return
+			}
+
+			mu.Lock()
+			for _, obj := range pge.Contents {
+				// Filter out directories
+				if !strings.HasSuffix(*obj.Key, "/") {
+					allObjects = append(allObjects, obj)
+				}
+			}
+			// Set startAfter to the last object key in this batch
+			if len(pge.Contents) > 0 {
+				startAfter = pge.Contents[len(pge.Contents)-1].Key
+			} else {
+				startAfter = nil
+			}
+			mu.Unlock()
+		}()
+
+		if startAfter == nil {
+			break
+		}
 	}
+
+	wg.Wait()
 
 	// Filter soft deletes
 	if c.SoftDeletes {
 		var active []types.Object
-		for _, o := range contents {
+		for _, o := range allObjects {
 			tag := &s3.GetObjectTaggingInput{
 				Bucket: &c.Bucket,
 				Key:    o.Key,
@@ -95,16 +113,22 @@ func (c *Client) FindAll(q Query) (*FindAllResult, error) {
 			}
 		}
 
-		contents = active
+		allObjects = active
 	}
 
-	if len(contents) == 0 {
+	if len(allObjects) == 0 {
 		return &FindAllResult{}, nil
 	}
 
-	// Fetch the list of objects
+	// Apply user-specified or default limit
 	var docs []interface{}
-	for _, obj := range contents {
+	var nextToken string
+	for i, obj := range allObjects {
+		if i >= q.Limit {
+			nextToken = *obj.Key
+			break
+		}
+
 		get := &s3.GetObjectInput{
 			Bucket: &c.Bucket,
 			Key:    obj.Key,
@@ -112,23 +136,17 @@ func (c *Client) FindAll(q Query) (*FindAllResult, error) {
 
 		rec, err := c.Service.GetObject(context.TODO(), get)
 		if err != nil {
-			return nil, err
+			continue
 		}
 
 		elem := reflect.TypeOf(ca.Reference).Elem()
 		model := reflect.New(elem).Interface()
 		err = json.NewDecoder(rec.Body).Decode(&model)
 		if err != nil {
-			return nil, err
+			continue
 		}
 
 		docs = append(docs, model)
-	}
-
-	// Set the next page token
-	var nextToken string
-	if pge.NextContinuationToken != nil {
-		nextToken = *pge.NextContinuationToken
 	}
 
 	return &FindAllResult{

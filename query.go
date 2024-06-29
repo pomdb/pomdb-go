@@ -7,7 +7,7 @@ type Query struct {
 	Field     string
 	Value     string
 	Filter    *QueryFilter
-	Limit     int32
+	Limit     int
 	NextToken string
 }
 
@@ -20,7 +20,7 @@ const (
 )
 
 const (
-	QueryLimitDefault int32 = 100
+	QueryLimitDefault int = 100
 )
 
 type QueryHandler func(obj types.Object) bool

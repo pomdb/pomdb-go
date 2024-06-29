@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"sync"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -26,12 +27,6 @@ func (c *Client) FindMany(q Query) (*FindManyResult, error) {
 	// Set default limit
 	if q.Limit == 0 {
 		q.Limit = QueryLimitDefault
-	}
-
-	// Set the page token
-	var token *string
-	if q.NextToken != "" {
-		token = &q.NextToken
 	}
 
 	// Dereference q.Model
@@ -55,31 +50,60 @@ func (c *Client) FindMany(q Query) (*FindManyResult, error) {
 		return nil, fmt.Errorf("FindMany: index field %s not found", q.Field)
 	}
 
-	// Set index pfx path
+	// Set index prefix path
 	pfx, err := encodeIndexPrefix(ca.Collection, q.Field, q.Value, idx.IndexType)
 	if err != nil {
 		return nil, err
 	}
 
-	lst := &s3.ListObjectsV2Input{
-		Bucket:  &c.Bucket,
-		Prefix:  &pfx,
-		MaxKeys: &q.Limit,
+	// List all objects concurrently
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	var allObjects []types.Object
+	var startAfter *string
+
+	// If the query includes a next token, use it as the starting point
+	if q.NextToken != "" {
+		startAfter = &q.NextToken
 	}
 
-	if token != nil {
-		lst.ContinuationToken = token
+	for {
+		lst := &s3.ListObjectsV2Input{
+			Bucket:     &c.Bucket,
+			Prefix:     &pfx,
+			StartAfter: startAfter,
+		}
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			pge, err := c.Service.ListObjectsV2(context.TODO(), lst)
+			if err != nil {
+				return
+			}
+
+			mu.Lock()
+			allObjects = append(allObjects, pge.Contents...)
+			// Set startAfter to the last object key in this batch
+			if len(pge.Contents) > 0 {
+				startAfter = pge.Contents[len(pge.Contents)-1].Key
+			} else {
+				startAfter = nil
+			}
+			mu.Unlock()
+		}()
+
+		if startAfter == nil {
+			break
+		}
 	}
 
-	pge, err := c.Service.ListObjectsV2(context.TODO(), lst)
-	if err != nil {
-		return nil, err
-	}
+	wg.Wait()
 
 	// Filter soft-deletes
 	if c.SoftDeletes {
 		var contents []types.Object
-		for _, o := range pge.Contents {
+		for _, o := range allObjects {
 			tag := &s3.GetObjectTaggingInput{
 				Bucket: &c.Bucket,
 				Key:    o.Key,
@@ -87,7 +111,7 @@ func (c *Client) FindMany(q Query) (*FindManyResult, error) {
 
 			tags, err := c.Service.GetObjectTagging(context.TODO(), tag)
 			if err != nil {
-				return nil, err
+				continue
 			}
 
 			deleted := false
@@ -103,37 +127,33 @@ func (c *Client) FindMany(q Query) (*FindManyResult, error) {
 			}
 		}
 
-		pge.Contents = contents
+		allObjects = contents
 	}
 
-	// Check for no results
-	if len(pge.Contents) == 0 {
-		return &FindManyResult{}, nil
-	}
-
-	// Run query filters
+	// Apply query filters
 	if q.Filter != nil {
 		var contents []types.Object
 
 		filter := q.GetHandler()
 
-		for _, o := range pge.Contents {
+		for _, o := range allObjects {
 			if res := filter(o); res {
 				contents = append(contents, o)
 			}
 		}
 
-		pge.Contents = contents
+		allObjects = contents
 	}
 
-	// Check for no results
-	if len(pge.Contents) == 0 {
-		return &FindManyResult{}, nil
-	}
-
-	// Fetch the documents
+	// Apply user-specified or default limit
 	var docs []interface{}
-	for _, o := range pge.Contents {
+	var nextToken string
+	for i, o := range allObjects {
+		if i >= q.Limit {
+			nextToken = *o.Key
+			break
+		}
+
 		uid := strings.TrimPrefix(*o.Key, pfx+"/")
 
 		get := &s3.GetObjectInput{
@@ -143,27 +163,21 @@ func (c *Client) FindMany(q Query) (*FindManyResult, error) {
 
 		doc, err := c.Service.GetObject(context.TODO(), get)
 		if err != nil {
-			return nil, err
+			continue
 		}
 
 		elem := reflect.TypeOf(ca.Reference).Elem()
 		model := reflect.New(elem).Interface()
 		err = json.NewDecoder(doc.Body).Decode(&model)
 		if err != nil {
-			return nil, err
+			continue
 		}
 
 		docs = append(docs, model)
 	}
 
-	// Set the next page token
-	var cursor string
-	if pge.NextContinuationToken != nil {
-		cursor = *pge.NextContinuationToken
-	}
-
 	return &FindManyResult{
 		Docs:      docs,
-		NextToken: cursor,
+		NextToken: nextToken,
 	}, nil
 }
