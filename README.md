@@ -19,6 +19,7 @@
 ## Table of Contents
 
 - [:rocket: Feature Highlights](#feature-highlights)
+- [:bulb: Use Cases](#use-cases)
 - [:package: Installation](#installation)
 - [:zap: Quick start](#quick-start)
 - [:gear: Creating a Client](#creating-a-client)
@@ -41,6 +42,13 @@
 - [Inverted indexes]() for fast and efficient querying
 - [Pagination]() for large data sets and high throughput
 - Have a feature request? [Let us know]()
+
+## Use Cases
+
+- :iphone: Web and Mobile Applications: user data, sessions, application state
+- :robot: IoT and Edge Computing: large volumes of sensor data
+- :pencil: Content Management Systems: metadata, versioning, content retrieval
+- :chart_with_upwards_trend: Data Lakes and Big Data Analytics: vast datasets, analytical insights
 
 ## Installation
 
