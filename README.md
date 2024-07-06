@@ -369,7 +369,7 @@ for i, user := range res.Contents {
 ### Query filters
 
 > [!NOTE]
-> [We're working on enhancing query filters with more advanced features →](https://github.com/pomdb/pomdb-go/issues/1)
+> [We're working on enhancing query filters with new options, aggregations, and joins →](https://github.com/pomdb/pomdb-go/issues/1)
 
 PomDB provides a basic set of comparison operators for the `Filter` field of the query. If no filter is provided, the query will default to `pomdb.QueryEqual`. Filters may only be used with the [`FindMany`](#findmanyquery-pomdbquery) method. Filters in other query methods are ignored. The list below shows the available filters and their SQL equivalents:
 
@@ -379,13 +379,15 @@ PomDB provides a basic set of comparison operators for the `Filter` field of the
 | `pomdb.QueryGreaterThan` | `WHERE field > value`                   |
 | `pomdb.QueryLessThan`    | `WHERE field < value`                   |
 | `pomdb.QueryBetween`     | `WHERE field BETWEEN value1 AND value2` |
+| `pomdb.QueryIn`          | `WHERE field IN (value1, value2, ...)`  |
 
+> **Example**: Find users with ages 30, 35, or 40
 ```go
 query := pomdb.Query{
   Model:  User{},
   Field:  "age",
-  Filter: pomdb.QueryLessThan,
-  Value:  40,
+  Filter: pomdb.QueryIn,
+  Value:  []int{30, 35, 40},
 }
 ```
 
