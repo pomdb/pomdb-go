@@ -382,18 +382,64 @@ PomDB provides a basic set of comparison operators for the `Filter` field of the
     </tr>
   </thead>
   <tbody>
-    <tr valign="top">
+    <tr align="left">
       <td><code>pomdb.QueryEqual</code></td>
       <td><code>WHERE age = 40</code></td>
       <td>
-        <pre lang="go">
-query := pomdb.Query{
+        <pre lang="go">query := pomdb.Query{
   Model:  User{},
   Field:  "age",
   Filter: pomdb.QueryEqual,
   Value:  40,
-}
-        </pre>
+}</pre>
+      </td>
+    </tr>
+    <tr align="left">
+      <td><code>pomdb.QueryLessThan</code></td>
+      <td><code>WHERE age &lt; 40</code></td>
+      <td>
+        <pre lang="go">query := pomdb.Query{
+  Model:  User{},
+  Field:  "age",
+  Filter: pomdb.QueryLessThan,
+  Value:  40,
+}</pre>
+      </td>
+    </tr>
+    <tr align="left">
+      <td><code>pomdb.QueryGreaterThan</code></td>
+      <td><code>WHERE age &gt; 40</code></td>
+      <td>
+        <pre lang="go">query := pomdb.Query{
+  Model:  User{},
+  Field:  "age",
+  Filter: pomdb.QueryGreaterThan,
+  Value:  40,
+}</pre>
+      </td>
+    </tr>
+    <tr align="left">
+      <td><code>pomdb.QueryBetween</code></td>
+      <td><code>WHERE age BETWEEN 30 AND 40</code></td>
+      <td>
+        <pre lang="go">query := pomdb.Query{
+  Model:  User{},
+  Field:  "age",
+  Filter: pomdb.QueryBetween,
+  Value:  []int{30, 40},
+}</pre>
+      </td>
+    </tr>
+    <tr align="left">
+      <td><code>pomdb.QueryIn</code></td>
+      <td><code>WHERE age IN (30, 40)</code></td>
+      <td>
+        <pre lang="go">query := pomdb.Query{
+  Model:  User{},
+  Field:  "age",
+  Filter: pomdb.QueryIn,
+  Value:  []int{30, 40},
+}</pre>
       </td>
     </tr>
   </tbody>
