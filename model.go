@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/oklog/ulid/v2"
@@ -85,6 +86,17 @@ func (ts *Timestamp) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// UnmarshalText populates the Timestamp from a text representation.
+func (ts *Timestamp) UnmarshalText(b []byte) error {
+	i, err := strconv.ParseInt(string(b), 10, 64)
+	if err != nil {
+		return err
+	}
+
+	*ts = Timestamp(time.Unix(i, 0))
+	return nil
+}
+
 // String returns the string representation of the Timestamp.
 func (t Timestamp) String() string {
 	return fmt.Sprintf("%d", time.Time(t).Unix())
@@ -93,4 +105,16 @@ func (t Timestamp) String() string {
 // IsNil returns true if the Timestamp is the zero value.
 func (t Timestamp) IsNil() bool {
 	return time.Time(t).IsZero()
+}
+
+func (t Timestamp) After(u Timestamp) bool {
+	return time.Time(t).After(time.Time(u))
+}
+
+func (t Timestamp) Before(u Timestamp) bool {
+	return time.Time(t).Before(time.Time(u))
+}
+
+func (t Timestamp) Equal(u Timestamp) bool {
+	return time.Time(t).Equal(time.Time(u))
 }

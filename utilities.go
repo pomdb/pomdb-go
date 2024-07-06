@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 	"unicode"
 )
@@ -118,9 +119,9 @@ func tagContains(tagValue string, keys []string) bool {
 }
 
 // encodeIndexPrefix returns the index path for the given field name and value.
-func encodeIndexPrefix(collection, field, value string, idxtype IndexType) (string, error) {
+func encodeIndexPrefix(collection, field string, value any, idxtype IndexType) (string, error) {
 	// Encode the index field value in base64
-	code := base64.StdEncoding.EncodeToString([]byte(value))
+	code := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%v", value)))
 
 	if len(code) > 1024 {
 		return "", fmt.Errorf("[Error] encodeIndexPrefix: index %s with value %s is > 1024 bytes", field, value)
@@ -138,18 +139,68 @@ func encodeIndexPrefix(collection, field, value string, idxtype IndexType) (stri
 	}
 }
 
+// encodeQueryPrefix returns the index path for the given field name.
+func encodeQueryPrefix(collection, field string, idxtype IndexType) (string, error) {
+	switch idxtype {
+	case RangedIndex:
+		return collection + "/indexes/ranged/" + field, nil
+	case UniqueIndex:
+		return collection + "/indexes/unique/" + field, nil
+	case SharedIndex:
+		return collection + "/indexes/shared/" + field, nil
+	default:
+		return "", errors.New("[Error] encodeQueryPrefix: invalid index type")
+	}
+}
+
 // decodeIndexPrefix returns the decoded value for the given index path.
-func decodeIndexPrefix(path string) (string, error) {
-	// Remove the collection prefix
-	path = strings.TrimPrefix(path, "/indexes/")
+func decodeIndexPrefix(path string, idx IndexField) (interface{}, error) {
+	b64 := strings.Split(path, "/")[4]
 
 	// Decode the base64 encoded value
-	decoded, err := base64.StdEncoding.DecodeString(path)
+	dec, err := base64.StdEncoding.DecodeString(b64)
 	if err != nil {
 		return "", fmt.Errorf("[Error] decodeIndexPrefix: %v", err)
 	}
+	val := string(dec)
 
-	return string(decoded), nil
+	// Handle specific types
+	if idx.FieldType.ConvertibleTo(reflect.TypeOf(Timestamp{})) {
+		ts := Timestamp{}
+		if err := ts.UnmarshalText([]byte(val)); err != nil {
+			return nil, err
+		}
+		return ts, nil
+	}
+
+	// Handle basic types
+	switch idx.FieldType.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		bits := idx.FieldType.Bits()
+		i, err := strconv.ParseInt(val, 10, bits)
+		if err != nil {
+			return nil, err
+		}
+		return reflect.ValueOf(i).Convert(idx.FieldType).Interface(), nil
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		bits := idx.FieldType.Bits()
+		u, err := strconv.ParseUint(val, 10, bits)
+		if err != nil {
+			return nil, err
+		}
+		return reflect.ValueOf(u).Convert(idx.FieldType).Interface(), nil
+	case reflect.Float32, reflect.Float64:
+		bits := idx.FieldType.Bits()
+		f, err := strconv.ParseFloat(val, bits)
+		if err != nil {
+			return nil, err
+		}
+		return reflect.ValueOf(f).Convert(idx.FieldType).Interface(), nil
+	case reflect.String:
+		return val, nil
+	}
+
+	return nil, fmt.Errorf("unsupported field type %s", idx.FieldType)
 }
 
 func stringifyFieldValue(field reflect.Value, ftype reflect.StructField) (string, error) {

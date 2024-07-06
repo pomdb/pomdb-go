@@ -19,6 +19,7 @@ const (
 
 type IndexField struct {
 	FieldName     string
+	FieldType     reflect.Type
 	CurrentValue  string
 	PreviousValue string
 	IndexType     IndexType
@@ -53,7 +54,6 @@ func NewModelCache(rv reflect.Value) *ModelCache {
 		mc.UpdatedAt = getFieldByName(rv, "UpdatedAt")
 		mc.DeletedAt = getFieldByName(rv, "DeletedAt")
 	} else {
-
 		for j := 0; j < rv.NumField(); j++ {
 			vpntr := rv.Field(j)
 			fpntr := rv.Type().Field(j)
@@ -87,30 +87,25 @@ func NewModelCache(rv reflect.Value) *ModelCache {
 			continue
 		}
 
-		if tagContains(pmtag, []string{"ranged", "index"}) {
-			mc.IndexFields = append(mc.IndexFields, IndexField{
-				FieldName:    jstag,
-				CurrentValue: value,
-				IndexType:    RangedIndex,
-			})
+		indexField := IndexField{
+			FieldName:    jstag,
+			FieldType:    fpntr.Type,
+			CurrentValue: value,
+		}
 
+		if tagContains(pmtag, []string{"ranged", "index"}) {
+			indexField.IndexType = RangedIndex
+			mc.IndexFields = append(mc.IndexFields, indexField)
 			continue
 		}
 		if tagContains(pmtag, []string{"unique", "index"}) {
-			mc.IndexFields = append(mc.IndexFields, IndexField{
-				FieldName:    jstag,
-				CurrentValue: value,
-				IndexType:    UniqueIndex,
-			})
-
+			indexField.IndexType = UniqueIndex
+			mc.IndexFields = append(mc.IndexFields, indexField)
 			continue
 		}
 		if tagContains(pmtag, []string{"index"}) {
-			mc.IndexFields = append(mc.IndexFields, IndexField{
-				FieldName:    jstag,
-				CurrentValue: value,
-				IndexType:    SharedIndex,
-			})
+			indexField.IndexType = SharedIndex
+			mc.IndexFields = append(mc.IndexFields, indexField)
 		}
 	}
 

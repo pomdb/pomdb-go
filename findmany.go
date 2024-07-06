@@ -24,6 +24,12 @@ func (c *Client) FindMany(q Query) (*FindManyResult, error) {
 		return nil, fmt.Errorf("FindMany: cannot search by id")
 	}
 
+	// Set default filter
+	if q.Filter == nil {
+		def := QueryFilterDefault
+		q.Filter = &def
+	}
+
 	// Set default limit
 	if q.Limit == 0 {
 		q.Limit = QueryLimitDefault
@@ -51,7 +57,7 @@ func (c *Client) FindMany(q Query) (*FindManyResult, error) {
 	}
 
 	// Set index prefix path
-	pfx, err := encodeIndexPrefix(ca.Collection, q.Field, q.Value, idx.IndexType)
+	pfx, err := encodeQueryPrefix(ca.Collection, q.Field, idx.IndexType)
 	if err != nil {
 		return nil, err
 	}
@@ -133,15 +139,15 @@ func (c *Client) FindMany(q Query) (*FindManyResult, error) {
 	// Apply query filters
 	if q.Filter != nil {
 		var contents []types.Object
-
-		filter := q.GetHandler()
-
-		for _, o := range allObjects {
-			if res := filter(o); res {
-				contents = append(contents, o)
+		for _, obj := range allObjects {
+			res, err := q.Compare(obj, idx)
+			if err != nil {
+				return nil, err
+			}
+			if res {
+				contents = append(contents, obj)
 			}
 		}
-
 		allObjects = contents
 	}
 
@@ -154,7 +160,7 @@ func (c *Client) FindMany(q Query) (*FindManyResult, error) {
 			break
 		}
 
-		uid := strings.TrimPrefix(*o.Key, pfx+"/")
+		uid := strings.Split(*o.Key, "/")[5]
 
 		get := &s3.GetObjectInput{
 			Bucket: &c.Bucket,

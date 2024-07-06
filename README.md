@@ -10,14 +10,13 @@
     <a href="https://github.com/pomdb/pomdb-go/releases/latest"><img src="https://img.shields.io/github/release/pomdb/pomdb-go.svg?style=flat-square"></a>
   </p>
   <p>
-    <strong>PomDB</strong> is an innovative approach to database management, leveraging the robust storage capabilities of <a href="https://aws.amazon.com/s3">S3</a> to store and retrieve data. PomDB is entirely client-driven and enforces an opinionated structure for consistency, compatibility, and speed :fire:
+    <strong>PomDB</strong> is a NoSQL object database that leverages the robust storage capabilities of <a href="https://aws.amazon.com/s3">Amazon S3</a> to store and retrieve data. PomDB is entirely client-driven and enforces an opinionated structure for consistency, compatibility, and speed :fire:
   </p>
 </div>
 
-<!-- table of contents with emojis, top level headings only -->
-
 ## Table of Contents
 
+- [:card_index: Object Databases](#object-databases)
 - [:rocket: Feature Highlights](#feature-highlights)
 - [:bulb: Use Cases](#use-cases)
 - [:package: Installation](#installation)
@@ -29,6 +28,10 @@
 - [:page_facing_up: Pagination](#pagination)
 - [:balance_scale: Concurrency Control](#concurrency-control)
 - [:construction: Roadmap](#roadmap)
+
+## Object Databases
+
+An object database is a type of NoSQL database that stores data as discrete objects, rather than rows and columns. Objects are self-contained units of data that can contain multiple fields, including nested objects and arrays. Object databases are schemaless, meaning that objects can have different fields and data types, and can be updated without changing the database schema.
 
 ## Feature Highlights
 
@@ -325,7 +328,7 @@ query := pomdb.Query{
   Model:  User{},
   Field:  "age",
   Filter: pomdb.QueryGreaterThan,
-  Value:  []string{"40"},
+  Value:  25,
 }
 
 res, err := client.FindMany(query)

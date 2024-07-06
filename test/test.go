@@ -97,29 +97,17 @@ func main() {
 
 	// log.Printf("FindOne: found user %s with ID %s", doc.FirstName, doc.ID)
 
-	// query := pomdb.Query{
-	// 	Model: &User{},
-	// 	Field: "first_name",
-	// 	Value: "John",
-	// }
+	bday = time.Date(1991, time.January, 1, 0, 0, 0, 0, time.UTC)
 
-	// res, err := client.FindMany(query)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// users := make([]*User, len(res.Docs))
-	// for i, user := range res.Docs {
-	// 	users[i] = user.(*User)
-	// }
-
-	// log.Printf("FindMany: found %d users", len(users))
-
+	gt := pomdb.QueryGreaterThan
 	query := pomdb.Query{
-		Model: &User{},
+		Model:  &User{},
+		Field:  "birthday",
+		Value:  pomdb.Timestamp(bday),
+		Filter: &gt,
 	}
 
-	res, err := client.FindAll(query)
+	res, err := client.FindMany(query)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -129,5 +117,21 @@ func main() {
 		users[i] = user.(*User)
 	}
 
-	log.Printf("FindAll: found %d users", len(users))
+	log.Printf("FindMany: found %d users", len(users))
+
+	// query := pomdb.Query{
+	// 	Model: &User{},
+	// }
+
+	// res, err := client.FindAll(query)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	// users := make([]*User, len(res.Docs))
+	// for i, user := range res.Docs {
+	// 	users[i] = user.(*User)
+	// }
+
+	// log.Printf("FindAll: found %d users", len(users))
 }

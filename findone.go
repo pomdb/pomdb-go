@@ -29,7 +29,7 @@ func (c *Client) FindOne(q Query) (interface{}, error) {
 	ca := NewModelCache(rv)
 
 	// Set record key path
-	key := ca.Collection + "/" + q.Value
+	key := ca.Collection + "/" + fmt.Sprintf("%v", q.Value)
 
 	if target == "index" {
 		// Get the index field
