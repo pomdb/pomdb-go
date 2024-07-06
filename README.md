@@ -373,77 +373,60 @@ for i, user := range res.Contents {
 
 PomDB provides a basic set of comparison operators for the `Filter` field of the query. If no filter is provided, the query will default to `pomdb.QueryEqual`. Filters may only be used with the [`FindMany`](#findmanyquery-pomdbquery) method. Filters in other query methods are ignored. The list below shows the available filters and their SQL equivalents:
 
-<table>
-  <thead>
-    <tr align="left">
-      <th>PomDB filter</th>
-      <th>Equivalent to</th>
-      <th>Sample Query</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr align="left">
-      <td><code>pomdb.QueryEqual</code></td>
-      <td><code>WHERE age = 40</code></td>
-      <td>
-        <pre lang="go">query := pomdb.Query{
+#### `pomdb.QueryEqual`
+> **Equivalent to** `SELECT * FROM users WHERE age = 40`
+```go
+query := pomdb.Query{
   Model:  User{},
   Field:  "age",
   Filter: pomdb.QueryEqual,
   Value:  40,
-}</pre>
-      </td>
-    </tr>
-    <tr align="left">
-      <td><code>pomdb.QueryLessThan</code></td>
-      <td><code>WHERE age &lt; 40</code></td>
-      <td>
-        <pre lang="go">query := pomdb.Query{
+}
+```
+
+#### `pomdb.QueryLessThan`
+> **Equivalent to** `SELECT * FROM users WHERE age < 40`
+```go
+query := pomdb.Query{
   Model:  User{},
   Field:  "age",
   Filter: pomdb.QueryLessThan,
   Value:  40,
-}</pre>
-      </td>
-    </tr>
-    <tr align="left">
-      <td><code>pomdb.QueryGreaterThan</code></td>
-      <td><code>WHERE age &gt; 40</code></td>
-      <td>
-        <pre lang="go">query := pomdb.Query{
+}
+```
+
+#### `pomdb.QueryGreaterThan`
+> **Equivalent to** `SELECT * FROM users WHERE age > 40`
+```go
+query := pomdb.Query{
   Model:  User{},
   Field:  "age",
   Filter: pomdb.QueryGreaterThan,
   Value:  40,
-}</pre>
-      </td>
-    </tr>
-    <tr align="left">
-      <td><code>pomdb.QueryBetween</code></td>
-      <td><code>WHERE age BETWEEN 30 AND 40</code></td>
-      <td>
-        <pre lang="go">query := pomdb.Query{
+}
+```
+
+#### `pomdb.QueryBetween`
+> **Equivalent to** `SELECT * FROM users WHERE age BETWEEN 30 AND 40`
+```go
+query := pomdb.Query{
   Model:  User{},
   Field:  "age",
   Filter: pomdb.QueryBetween,
   Value:  []int{30, 40},
-}</pre>
-      </td>
-    </tr>
-    <tr align="left">
-      <td><code>pomdb.QueryIn</code></td>
-      <td><code>WHERE age IN (30, 40)</code></td>
-      <td>
-        <pre lang="go">query := pomdb.Query{
+}
+```
+
+#### `pomdb.QueryIn`
+> **Equivalent to** `SELECT * FROM users WHERE age IN (30, 40, 50)`
+```go
+query := pomdb.Query{
   Model:  User{},
   Field:  "age",
   Filter: pomdb.QueryIn,
-  Value:  []int{30, 40},
-}</pre>
-      </td>
-    </tr>
-  </tbody>
-</table>
+  Value:  []int{30, 40, 50},
+}
+```
 
 ### Soft-deletes
 
