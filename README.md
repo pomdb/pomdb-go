@@ -370,12 +370,12 @@ for i, user := range res.Contents {
 
 PomDB provides a basic set of comparison operators for the `Filter` field of the query. Filters may only be used with the [`FindMany`](#findmanyquery-pomdbquery) method. If no filter is provided, PomDB will default to an equality filter. The following filters are supported, with additional filters planned for future releases:
 
-| PomDB Filter                   | SQL Equivalent                          |
-|--------------------------------|-----------------------------------------|
-| `pomdb.QueryEqual`{:.go}       | `WHERE field = value`                   |
-| `pomdb.QueryGreaterThan`{:.go} | `WHERE field > value`                   |
-| `pomdb.QueryLessThan`{:.go}    | `WHERE field < value`                   |
-| `pomdb.QueryBetween`{:.go}     | `WHERE field BETWEEN value1 AND value2` |
+| PomDB Filter             | SQL Equivalent                          |
+|--------------------------|-----------------------------------------|
+| `pomdb.QueryEqual`       | `WHERE field = value`                   |
+| `pomdb.QueryGreaterThan` | `WHERE field > value`                   |
+| `pomdb.QueryLessThan`    | `WHERE field < value`                   |
+| `pomdb.QueryBetween`     | `WHERE field BETWEEN value1 AND value2` |
 
 ### Soft-deletes
 
