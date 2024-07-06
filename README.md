@@ -369,16 +369,25 @@ for i, user := range res.Contents {
 ### Query filters
 
 > [!NOTE]
-> [We're working on enhancing queries with more advanced features →](https://github.com/pomdb/pomdb-go/issues/1)
+> [We're working on enhancing query filters with more advanced features →](https://github.com/pomdb/pomdb-go/issues/1)
 
-PomDB provides a basic set of comparison operators for the `Filter` field of the query. If no filter is provided, the query will default to `pomdb.QueryEqual`. Filters may only be used with the [`FindMany`](#findmanyquery-pomdbquery) method. Filters in other query methods are ignored. The table below shows the available filters and their SQL equivalents:
+PomDB provides a basic set of comparison operators for the `Filter` field of the query. If no filter is provided, the query will default to `pomdb.QueryEqual`. Filters may only be used with the [`FindMany`](#findmanyquery-pomdbquery) method. Filters in other query methods are ignored. The list below shows the available filters and their SQL equivalents:
 
 | Filter                   | Equivalent to                           |
-|--------------------------|-----------------------------------------|
+|:-------------------------|:----------------------------------------|
 | `pomdb.QueryEqual`       | `WHERE field = value`                   |
 | `pomdb.QueryGreaterThan` | `WHERE field > value`                   |
 | `pomdb.QueryLessThan`    | `WHERE field < value`                   |
 | `pomdb.QueryBetween`     | `WHERE field BETWEEN value1 AND value2` |
+
+```go
+query := pomdb.Query{
+  Model:  User{},
+  Field:  "age",
+  Filter: pomdb.QueryLessThan,
+  Value:  40,
+}
+```
 
 ### Soft-deletes
 
