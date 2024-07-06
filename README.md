@@ -371,7 +371,7 @@ for i, user := range res.Contents {
 > [!NOTE]
 > We're working on enhancing queries with [new filter options, aggregations, and joins →](https://github.com/pomdb/pomdb-go/issues/1)
 
-PomDB provides a basic set of comparison operators for the `Filter` field of the query. If no filter is provided, the query will default to `pomdb.QueryEqual`. Filters may only be used with the [`FindMany`](#findmanyquery-pomdbquery) method. Filters passed to other query methods will be ignored. The list below shows the available filters and their SQL equivalents:
+PomDB provides a basic set of comparison operators for the `Filter` field of the query. If no filter is provided, the query will default to `pomdb.QueryEqual`. Filters may only be used with the [`FindMany`](#findmanyquery-pomdbquery) method. Filters passed to other query methods will be ignored:
 
 #### `pomdb.QueryEqual`
 > **Equivalent to** `SELECT * FROM users WHERE age = 40`
