@@ -320,15 +320,15 @@ user := res.(*User)
 
 This method is used to find multiple objects in the database using an index. The query must include the model, field name, field value, and filter, e.g.:
 
-> **Equivalent to** `SELECT * FROM users WHERE name LIKE '%Doe%'`
+> **Equivalent to** `SELECT * FROM users WHERE age < 40`
 
 ```go
 // Typical HR filter
 query := pomdb.Query{
   Model:  User{},
   Field:  "age",
-  Filter: pomdb.QueryGreaterThan,
-  Value:  25,
+  Filter: pomdb.QueryLessThan,
+  Value:  40,
 }
 
 res, err := client.FindMany(query)

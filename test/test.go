@@ -97,14 +97,13 @@ func main() {
 
 	// log.Printf("FindOne: found user %s with ID %s", doc.FirstName, doc.ID)
 
-	bday = time.Date(1991, time.January, 1, 0, 0, 0, 0, time.UTC)
+	bday = time.Date(1989, time.January, 1, 0, 0, 0, 0, time.UTC)
 
-	gt := pomdb.QueryGreaterThan
 	query := pomdb.Query{
 		Model:  &User{},
 		Field:  "birthday",
+		Filter: pomdb.QueryGreaterThan,
 		Value:  pomdb.Timestamp(bday),
-		Filter: &gt,
 	}
 
 	res, err := client.FindMany(query)

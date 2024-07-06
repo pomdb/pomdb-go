@@ -24,12 +24,6 @@ func (c *Client) FindMany(q Query) (*FindManyResult, error) {
 		return nil, fmt.Errorf("FindMany: cannot search by id")
 	}
 
-	// Set default filter
-	if q.Filter == nil {
-		def := QueryFilterDefault
-		q.Filter = &def
-	}
-
 	// Set default limit
 	if q.Limit == 0 {
 		q.Limit = QueryLimitDefault
@@ -108,7 +102,7 @@ func (c *Client) FindMany(q Query) (*FindManyResult, error) {
 
 	// Filter soft-deletes
 	if c.SoftDeletes {
-		var contents []types.Object
+		var visible []types.Object
 		for _, o := range allObjects {
 			tag := &s3.GetObjectTaggingInput{
 				Bucket: &c.Bucket,
@@ -129,27 +123,25 @@ func (c *Client) FindMany(q Query) (*FindManyResult, error) {
 			}
 
 			if !deleted {
-				contents = append(contents, o)
+				visible = append(visible, o)
 			}
 		}
 
-		allObjects = contents
+		allObjects = visible
 	}
 
 	// Apply query filters
-	if q.Filter != nil {
-		var contents []types.Object
-		for _, obj := range allObjects {
-			res, err := q.Compare(obj, idx)
-			if err != nil {
-				return nil, err
-			}
-			if res {
-				contents = append(contents, obj)
-			}
+	var filtered []types.Object
+	for _, obj := range allObjects {
+		res, err := q.Compare(obj, idx)
+		if err != nil {
+			return nil, err
 		}
-		allObjects = contents
+		if res {
+			filtered = append(filtered, obj)
+		}
 	}
+	allObjects = filtered
 
 	// Apply user-specified or default limit
 	var docs []interface{}

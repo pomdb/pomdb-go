@@ -10,7 +10,7 @@ type Query struct {
 	Model     interface{}
 	Field     string
 	Value     any
-	Filter    *QueryFilter
+	Filter    QueryFilter
 	Limit     int
 	NextToken string
 }
@@ -25,8 +25,7 @@ const (
 )
 
 const (
-	QueryLimitDefault  int         = 100
-	QueryFilterDefault QueryFilter = QueryEqual
+	QueryLimitDefault int = 100
 )
 
 // FilterResults filters the results of a query based on the query filter.
@@ -38,7 +37,7 @@ func (q *Query) Compare(obj types.Object, idx *IndexField) (bool, error) {
 
 	iValOf := reflect.ValueOf(ifc)
 	qValOf := reflect.ValueOf(q.Value)
-	comp := *q.Filter
+	comp := q.Filter
 
 	if idx.FieldType != iValOf.Type() || idx.FieldType != qValOf.Type() {
 		return false, nil
