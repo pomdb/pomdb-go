@@ -366,6 +366,17 @@ for i, user := range res.Contents {
 // ...
 ```
 
+### Query filters
+
+PomDB provides a basic set of comparison operators for the `Filter` field of the query. Filters may only be used with the FindMany method. If no filter is provided, PomDB will default to an equality filter. The following filters are supported, with additional filters planned for future releases:
+
+| PomDB Filter             | SQL Equivalent       |
+|--------------------------|----------------------|
+| `pomdb.QueryEqual`       | `=`                  |
+| `pomdb.QueryGreaterThan` | `>`                  |
+| `pomdb.QueryLessThan`    | `<`                  |
+| `pomdb.QueryBetween`     | `BETWEEN`            |
+
 ### Soft-deletes
 
 PomDB supports soft-deletes, allowing objects to be marked as deleted without actually removing them from the database. Soft-deleted objects are stored in the database with a non-zero `DeletedAt` object tag, and are automatically excluded from queries. Soft-deleted objects can be restored or purged using the [`Restore`](#restore) and [`Purge`](#purge) methods, respectively. To enable soft-deletes, set the `SoftDeletes` field of the client to `true`:
