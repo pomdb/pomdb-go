@@ -375,16 +375,16 @@ PomDB provides a basic set of comparison operators for the `Filter` field of the
 
 <table>
   <thead>
-    <tr>
-      <th>Filter</th>
-      <th>SQL Equivalent</th>
+    <tr align="left">
+      <th>PomDB filter</th>
+      <th>Equivalent to</th>
       <th>Sample Query</th>
     </tr>
   </thead>
   <tbody>
-    <tr>
+    <tr valign="top">
       <td><code>pomdb.QueryEqual</code></td>
-      <td><code>=</code></td>
+      <td><code>WHERE age = 40</code></td>
       <td>
         <pre lang="go">
 query := pomdb.Query{
