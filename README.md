@@ -381,7 +381,8 @@ PomDB provides a basic set of comparison operators for the `Filter` field of the
 | `pomdb.QueryBetween`     | `WHERE field BETWEEN value1 AND value2` |
 | `pomdb.QueryIn`          | `WHERE field IN (value1, value2, ...)`  |
 
-> **Example**: Find users with ages 30, 35, or 40
+> **Equivalent to** `SELECT * FROM users WHERE age IN (30, 35, 40)`
+
 ```go
 query := pomdb.Query{
   Model:  User{},
