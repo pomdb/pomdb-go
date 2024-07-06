@@ -373,24 +373,31 @@ for i, user := range res.Contents {
 
 PomDB provides a basic set of comparison operators for the `Filter` field of the query. If no filter is provided, the query will default to `pomdb.QueryEqual`. Filters may only be used with the [`FindMany`](#findmanyquery-pomdbquery) method. Filters in other query methods are ignored. The list below shows the available filters and their SQL equivalents:
 
-| PomDB Filter             | Equivalent SQL                          |
-|:-------------------------|:----------------------------------------|
-| `pomdb.QueryEqual`       | `WHERE field = value`                   |
-| `pomdb.QueryGreaterThan` | `WHERE field > value`                   |
-| `pomdb.QueryLessThan`    | `WHERE field < value`                   |
-| `pomdb.QueryBetween`     | `WHERE field BETWEEN value1 AND value2` |
-| `pomdb.QueryIn`          | `WHERE field IN (value1, value2, ...)`  |
-
-> **Equivalent to** `SELECT * FROM users WHERE age IN (30, 35, 40)`
-
-```go
+<table>
+  <thead>
+    <tr>
+      <th>Filter</th>
+      <th>SQL Equivalent</th>
+      <th>Sample Query</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>pomdb.QueryEqual</code></td>
+      <td><code>=</code></td>
+      <td>
+        <pre lang="go">
 query := pomdb.Query{
   Model:  User{},
   Field:  "age",
-  Filter: pomdb.QueryIn,
-  Value:  []int{30, 35, 40},
+  Filter: pomdb.QueryEqual,
+  Value:  40,
 }
-```
+        </pre>
+      </td>
+    </tr>
+  </tbody>
+</table>
 
 ### Soft-deletes
 
