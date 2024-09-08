@@ -51,7 +51,7 @@ An object database is a type of NoSQL database that stores data as discrete obje
 - :iphone: Web and Mobile Applications: user data, sessions, application state
 - :robot: IoT and Edge Computing: large volumes of sensor data
 - :pencil: Content Management Systems: metadata, versioning, content retrieval
-- :chart_with_upwards_trend: Data Lakes and Big Data Analytics: vast datasets, analytical insights
+- :man_shrugging: What are you building? [Let us know]()
 
 ## Installation
 
@@ -369,7 +369,7 @@ for i, user := range res.Contents {
 ### Query filters
 
 > [!NOTE]
-> We're working on enhancing queries with [new filter options, aggregations, and joins →](https://github.com/pomdb/pomdb-go/issues/1)
+> Have an idea for how to improve pomdb queries? [Let us know →](https://github.com/pomdb/pomdb-go/issues/1)
 
 PomDB provides a basic set of comparison operators for the `Filter` field of the query. If no filter is provided, the query will default to `pomdb.QueryEqual`. Filters may only be used with the [`FindMany`](#findmanyquery-pomdbquery) method. Filters passed to other query methods will be ignored:
 
