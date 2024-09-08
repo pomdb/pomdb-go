@@ -36,15 +36,15 @@ An object database is a type of NoSQL database that stores data as discrete obje
 ## Feature Highlights
 
 - Serverless client-driven architecture
-- S3-backed [durability]() and [consistency]()
-- [Strongly-typed]() and [schemaless]() data storage
-- [Pessimistic]() and [optimistic]() concurrency control
-- Lexicographically sortable [ULID]() identifiers
-- Real-time [change data capture]() via S3 events
-- [Soft-deletes]() for reversible data management
-- [Inverted indexes]() for fast and efficient querying
-- [Pagination]() for large data sets and high throughput
-- Have a feature request? [Let us know]()
+- S3-backed [durability](https://docs.aws.amazon.com/AmazonS3/latest/userguide/DataDurability.html) and [consistency](https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html#ConsistencyModel)
+- Strongly-typed and schemaless data storage
+- [Pessimistic](#pessimistic) and [optimistic](#optimistic) concurrency control
+- Lexicographically sortable [ULID](#object-identifiers) identifiers
+- Real-time change data capture via [S3 events](https://docs.aws.amazon.com/AmazonS3/latest/userguide/EventNotifications.html)
+- [Soft-deletes](#soft-deletes) for reversible data management
+- [Inverted indexes](#encoding-strategy) for fast and efficient querying
+- Paging for huge data sets and high throughput
+- Have a feature request? [Let us know](https://github.com/pomdb/pomdb-go/issues)
 
 ## Use Cases
 
@@ -323,7 +323,6 @@ This method is used to find multiple objects in the database using an index. The
 > **Equivalent to** `SELECT * FROM users WHERE age < 40`
 
 ```go
-// Typical HR filter
 query := pomdb.Query{
   Model:  User{},
   Field:  "age",
