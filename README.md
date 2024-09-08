@@ -249,6 +249,8 @@ PomDB will convert the model name to snake case and pluralize it for the collect
 
 ### Query methods
 
+https://github.com/pomdb/pomdb-go/issues/1
+
 #### `Create(model interface{})`
 
 This method is used to create a new object in the database. `model` must be a pointer to an interface that embeds the `pomdb.Model` struct, or defines an `ID` field of type `pomdb.ULID`, e.g.:
@@ -364,9 +366,6 @@ for i, user := range res.Contents {
 ```
 
 ### Query filters
-
-> [!NOTE]
-> Have an idea to improve pomdb queries? [Let us know →](https://github.com/pomdb/pomdb-go/issues/1)
 
 PomDB provides a basic set of comparison operators for the `Filter` field of the query. If no filter is provided, the query will default to `pomdb.QueryEqual`. Filters may only be used with the [`FindMany`](#findmanyquery-pomdbquery) method. Filters passed to other query methods will be ignored:
 
