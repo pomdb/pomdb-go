@@ -26,7 +26,6 @@
 - [:nut_and_bolt: Working with Objects](#working-with-objects)
 - [:mag: Working with Indexes](#working-with-indexes)
 - [:page_facing_up: Pagination](#pagination)
-- [:balance_scale: Concurrency Control](#concurrency-control)
 - [:construction: Roadmap](#roadmap)
 
 ## Object Databases
@@ -38,7 +37,6 @@ An object database is a type of NoSQL database that stores data as discrete obje
 - Serverless client-driven architecture
 - S3-backed [durability](https://docs.aws.amazon.com/AmazonS3/latest/userguide/DataDurability.html) and [consistency](https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html#ConsistencyModel)
 - Strongly-typed and schemaless data storage
-- [Pessimistic](#pessimistic) and [optimistic](#optimistic) concurrency control
 - Lexicographically sortable [ULID](#object-identifiers) identifiers
 - Real-time change data capture via [S3 events](https://docs.aws.amazon.com/AmazonS3/latest/userguide/EventNotifications.html)
 - [Soft-deletes](#soft-deletes) for reversible data management
@@ -368,7 +366,7 @@ for i, user := range res.Contents {
 ### Query filters
 
 > [!NOTE]
-> Have an idea for how to improve pomdb queries? [Let us know →](https://github.com/pomdb/pomdb-go/issues/1)
+> Have an idea to improve pomdb queries? [Let us know →](https://github.com/pomdb/pomdb-go/issues/1)
 
 PomDB provides a basic set of comparison operators for the `Filter` field of the query. If no filter is provided, the query will default to `pomdb.QueryEqual`. Filters may only be used with the [`FindMany`](#findmanyquery-pomdbquery) method. Filters passed to other query methods will be ignored:
 
@@ -563,34 +561,6 @@ for res.NextToken != "" {
 // process the last page
 for _, user := range res.Contents {
   // ...
-}
-```
-
-## Concurrency Control
-
-PomDB implements advanced concurrency mechanisms to efficiently manage data integrity in multi-user environments, including both pessimistic and optimistic concurrency control. This dual approach allows PomDB to cater to a wide range of application requirements, balancing data integrity with system performance.
-
-### Pessimistic
-
-Pessimistic concurrency control locks data during transactions to prevent conflicts. While this approach ensures data consistency by preventing concurrent modifications, it can impact performance in high-traffic scenarios. To enable it, set the `Pessimistic` field of the client to `true`:
-
-```go
-var client = pomdb.Client{
-  Bucket:      "pomdb",
-  Region:      "us-east-1",
-  Pessimistic: true,
-}
-```
-
-### Optimistic
-
-Optimistic concurrency control allows concurrent access and resolves conflicts as they occur. This approach offers higher throughput but may lead to increased conflicts and retries in environments with frequent data updates. To enable it, set the `Optimistic` field of the client to `true`:
-
-```go
-var client = pomdb.Client{
-  Bucket:     "pomdb",
-  Region:     "us-east-1",
-  Optimistic: true,
 }
 ```
 
