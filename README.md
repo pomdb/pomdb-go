@@ -249,7 +249,7 @@ PomDB will convert the model name to snake case and pluralize it for the collect
 
 ### Query methods
 
-> Ideas for improved and expanded query features `pomdb/pomdb-go#1`
+> [`pomdb/pomdb-go#1`](https://github.com/pomdb/pomdb-go/issues/1) Ideas for improved and expanded query features →
 
 #### `Create(model interface{})`
 
