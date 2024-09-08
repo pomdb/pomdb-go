@@ -10,7 +10,7 @@
     <a href="https://github.com/pomdb/pomdb-go/releases/latest"><img src="https://img.shields.io/github/release/pomdb/pomdb-go.svg?style=flat-square"></a>
   </p>
   <p>
-    <strong>PomDB</strong> is a NoSQL object database that leverages the robust storage capabilities of <a href="https://aws.amazon.com/s3">Amazon S3</a> to store and retrieve data. PomDB is entirely client-driven and enforces an opinionated structure for consistency, compatibility, and speed. PomDB is in early development and may change significantly before reaching a stable release. See the issues and <a href="https://github.com/orgs/pomdb/projects/2">roadmap</a> to contribute or follow along.
+    <strong>PomDB</strong> is a NoSQL object database that leverages the robust storage capabilities of <a href="https://aws.amazon.com/s3">Amazon S3</a> to store and retrieve data. PomDB is entirely client-driven and enforces an opinionated structure for consistency, compatibility, and speed. PomDB is in early development and may change significantly before reaching a stable release. See the issues page and <a href="https://github.com/orgs/pomdb/projects/2">roadmap</a> to contribute or follow along.
   </p>
 </div>
 
