@@ -49,7 +49,7 @@ An object database is a type of NoSQL database that stores data as discrete obje
 - :iphone: Web and Mobile Applications: user data, sessions, application state
 - :robot: IoT and Edge Computing: large volumes of sensor data
 - :pencil: Content Management Systems: metadata, versioning, content retrieval
-- :man_shrugging: What are you building? [Let us know]()
+- :man_shrugging: What are you building? [Let us know](https://github.com/orgs/pomdb/discussions/categories/show-and-tell)
 
 ## Installation
 
