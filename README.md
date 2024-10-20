@@ -1,9 +1,7 @@
 # pomdb-go
 
-<p>
-  <a href="https://goreportcard.com/report/github.com/pomdb/pomdb-go"><img src="https://goreportcard.com/badge/github.com/pomdb/pomdb-go?style=flat-square"></a>
-  <a href="https://pkg.go.dev/github.com/pomdb/pomdb-go"><img src="https://pkg.go.dev/badge/github.com/pomdb/pomdb-go"></a>
-</p>
+[![Go Report Card](https://goreportcard.com/badge/github.com/pomdb/pomdb-go)](https://goreportcard.com/report/github.com/pomdb/pomdb-go)
+[![Go Reference](https://pkg.go.dev/badge/github.com/pomdb/pomdb-go.svg)](https://pkg.go.dev/github.com/pomdb/pomdb-go)
 
 <strong>PomDB</strong> is a NoSQL object database that leverages the robust storage capabilities of <a href="https://aws.amazon.com/s3">Amazon S3</a> to store and retrieve data. PomDB is entirely client-driven and enforces an opinionated structure for consistency, compatibility, and speed. PomDB is in early development and may change significantly before reaching a stable release. See the issues page and <a href="https://github.com/orgs/pomdb/projects/2">roadmap</a> to contribute or follow along.
 
