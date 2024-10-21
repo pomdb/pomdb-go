@@ -42,6 +42,12 @@ An object database is a type of NoSQL database that stores data as discrete obje
 - :pencil: Content Management Systems: metadata, versioning, content retrieval
 - :man_shrugging: What are you building? [Let us know](https://github.com/orgs/pomdb/discussions/categories/show-and-tell)
 
+## Performance
+
+PomDB optimizes for high-throughput and low-latency. S3 automatically scales to high request rates, allowing your application to achieve at least 3,500 write and 5,500 read requests per second.
+
+[Best practices design patterns: optimizing Amazon S3 performance →](https://docs.aws.amazon.com/AmazonS3/latest/userguide/optimizing-performance.html)
+
 ## Installation
 
 ```bash
